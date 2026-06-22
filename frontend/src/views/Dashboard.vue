@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getMyTeams, getMyTasks, getMyApplications } from '@/api/user'
@@ -19,8 +19,8 @@ onMounted(async () => {
   try {
     const [tRes, tkRes, aRes] = await Promise.all([
       getMyTeams({ pageSize: 100 }),
-      getMyTasks({ pageSize: 10 }),
-      getMyApplications({ pageSize: 5 })
+      getMyTasks({ pageSize: 100 }),
+      getMyApplications({ pageSize: 100 })
     ])
     myTeams.value = tRes.data?.records || []
     myTasks.value = tkRes.data?.records || []
@@ -30,17 +30,37 @@ onMounted(async () => {
   }
 })
 
-const cards = [
-  { label: '我的团队', value: 0, icon: UserFilled, color: '#409eff' },
-  { label: '待办任务', value: 0, icon: Files, color: '#e6a23c' },
-  { label: '进行中任务', value: 0, icon: Clock, color: '#67c23a' },
-  { label: '待审核申请', value: 0, icon: DataBoard, color: '#f56c6c' }
-]
+const cards = computed(() => {
+  const todoTasks = myTasks.value.filter(t => t.listName === '待办' || t.status === 'todo')
+  const inProgressTasks = myTasks.value.filter(t => t.listName === '进行中' || t.status === 'in_progress')
+  const pendingApps = myApps.value.filter(a => a.status === 'pending')
+  return [
+    { label: '我的团队', value: myTeams.value.length, icon: UserFilled, color: '#409eff' },
+    { label: '待办任务', value: todoTasks.length, icon: Files, color: '#e6a23c' },
+    { label: '进行中任务', value: inProgressTasks.length, icon: Clock, color: '#67c23a' },
+    { label: '待审核申请', value: pendingApps.length, icon: DataBoard, color: '#f56c6c' }
+  ]
+})
 </script>
 
 <template>
   <div class="dashboard" v-loading="loading">
     <h3 class="page-title">我的工作台</h3>
+
+    <!-- 统计卡片 -->
+    <el-row :gutter="16" style="margin-bottom:16px">
+      <el-col :span="6" v-for="c in cards" :key="c.label">
+        <el-card shadow="hover">
+          <div style="display:flex;align-items:center;gap:12px">
+            <el-icon :size="32" :color="c.color"><component :is="c.icon" /></el-icon>
+            <div>
+              <div style="font-size:24px;font-weight:700">{{ c.value }}</div>
+              <div style="color:#999;font-size:13px">{{ c.label }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <!-- 我的团队 -->
     <el-card class="section-card">

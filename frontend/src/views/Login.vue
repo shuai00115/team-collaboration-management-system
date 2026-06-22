@@ -35,10 +35,16 @@ async function handleLogin() {
 }
 
 // Demo 模式：一键体验，无需后端
-function handleDemoLogin() {
+async function handleDemoLogin() {
   localStorage.setItem('demoMode', 'true')
   localStorage.setItem('accessToken', 'demo_token_fake_jwt')
-  ElMessage.success('🎉 已进入 Demo 体验模式，数据均为模拟数据')
+  userStore.setToken('demo_token_fake_jwt')
+  // 预加载用户信息
+  await Promise.all([
+    userStore.fetchUserInfo(),
+    userStore.fetchUnreadCount()
+  ])
+  ElMessage.success('🎉 已进入 Demo 体验模式，所有数据均为模拟数据')
   router.push('/dashboard')
 }
 </script>

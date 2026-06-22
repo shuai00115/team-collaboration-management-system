@@ -22,14 +22,19 @@ const createProjectVisible = ref(false)
 const newProjectName = ref('')
 const newProjectDesc = ref('')
 
-const isLeader = computed(() => {
-  const me = members.value.find(m => m.userId === userStore.userInfo?.userId)
-  return me?.role === 'leader'
-})
+// 运行时身份（在 fetchData 中计算）
+const myRole = ref('')        // '' | 'leader' | 'member' | 'outsider'
+const isLeader = computed(() => myRole.value === 'leader')
+const isMember = computed(() => myRole.value === 'leader' || myRole.value === 'member')
 
-const isMember = computed(() => {
-  return members.value.some(m => m.userId === userStore.userInfo?.userId)
-})
+function computeMyRole() {
+  if (!userStore.userInfo) {
+    return ''
+  }
+  const me = members.value.find(m => m.userId === userStore.userInfo.userId)
+  if (!me) return ''
+  return me.role
+}
 
 async function fetchData() {
   loading.value = true
@@ -42,6 +47,7 @@ async function fetchData() {
     team.value = tRes.data
     members.value = mRes.data || []
     projects.value = pRes.data?.records || []
+    myRole.value = computeMyRole()
     if (isLeader.value) {
       const aRes = await getApplications(teamId.value, { status: 'pending' })
       applications.value = aRes.data?.records || []
@@ -52,47 +58,59 @@ async function fetchData() {
 onMounted(fetchData)
 
 async function handleApply() {
-  await applyToJoin(teamId.value, { message: applyMsg.value })
-  ElMessage.success('申请已提交')
-  applyVisible.value = false
-  applyMsg.value = ''
+  try {
+    await applyToJoin(teamId.value, { message: applyMsg.value })
+    ElMessage.success('申请已提交')
+    applyVisible.value = false
+    applyMsg.value = ''
+  } catch { /* error handled by interceptor */ }
 }
 
 async function handleRemove(userId) {
-  await ElMessageBox.confirm('确定要移除该成员吗？', '确认', { type: 'warning' })
-  await removeMember(teamId.value, userId)
-  ElMessage.success('已移除')
-  fetchData()
+  try {
+    await ElMessageBox.confirm('确定要移除该成员吗？', '确认', { type: 'warning' })
+    await removeMember(teamId.value, userId)
+    ElMessage.success('已移除')
+    fetchData()
+  } catch { /* cancelled or error */ }
 }
 
 async function handleReview(requestId, action) {
-  await reviewApplication(teamId.value, requestId, { action })
-  ElMessage.success(action === 'approve' ? '已通过' : '已拒绝')
-  fetchData()
+  try {
+    await reviewApplication(teamId.value, requestId, { action })
+    ElMessage.success(action === 'approve' ? '已通过' : '已拒绝')
+    fetchData()
+  } catch { /* error handled by interceptor */ }
 }
 
 async function handleCreateProject() {
   if (!newProjectName.value.trim()) return ElMessage.warning('请输入项目名称')
-  await createProject(teamId.value, { name: newProjectName.value, description: newProjectDesc.value })
-  ElMessage.success('项目创建成功')
-  createProjectVisible.value = false
-  newProjectName.value = ''
-  newProjectDesc.value = ''
-  fetchData()
+  try {
+    await createProject(teamId.value, { name: newProjectName.value, description: newProjectDesc.value })
+    ElMessage.success('项目创建成功')
+    createProjectVisible.value = false
+    newProjectName.value = ''
+    newProjectDesc.value = ''
+    fetchData()
+  } catch { /* error handled by interceptor */ }
 }
 
 async function handleDeleteProject(projectId) {
-  await ElMessageBox.confirm('确定要删除该项目吗？', '确认', { type: 'warning' })
-  await deleteProject(projectId)
-  ElMessage.success('已删除')
-  fetchData()
+  try {
+    await ElMessageBox.confirm('确定要删除该项目吗？', '确认', { type: 'warning' })
+    await deleteProject(projectId)
+    ElMessage.success('已删除')
+    fetchData()
+  } catch { /* cancelled or error */ }
 }
 
 async function handleDeleteTeam() {
-  await ElMessageBox.confirm('确定要解散该团队吗？此操作不可逆！', '确认解散', { type: 'error', confirmButtonText: '确认解散' })
-  await deleteTeam(teamId.value)
-  ElMessage.success('团队已解散')
-  router.push('/teams')
+  try {
+    await ElMessageBox.confirm('确定要解散该团队吗？此操作不可逆！', '确认解散', { type: 'error', confirmButtonText: '确认解散' })
+    await deleteTeam(teamId.value)
+    ElMessage.success('团队已解散')
+    router.push('/teams')
+  } catch { /* cancelled or error */ }
 }
 </script>
 
@@ -105,7 +123,7 @@ async function handleDeleteTeam() {
           <div>
             <h3>{{ team.name }}</h3>
             <el-tag :type="team.status==='recruiting'?'success':'info'">{{ team.status==='recruiting'?'招募中':'已关闭' }}</el-tag>
-            <span style="margin-left:12px;color:#999">成员 {{ team.currentMembers }} / {{ team.maxMembers }}</span>
+            <span style="margin-left:12px;color:#999">成员 {{ members.length }} / {{ team.maxMembers }}</span>
           </div>
           <div>
             <el-button v-if="!isMember && team.status==='recruiting'" type="primary" @click="applyVisible = true">申请加入</el-button>

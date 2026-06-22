@@ -22,43 +22,43 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '工作台' }
+        meta: { title: '工作台', auth: true }
       },
       {
         path: 'teams',
         name: 'Teams',
         component: () => import('@/views/Teams.vue'),
-        meta: { title: '招募墙' }
+        meta: { title: '招募墙', public: true }
       },
       {
         path: 'teams/:teamId',
         name: 'TeamDetail',
         component: () => import('@/views/TeamDetail.vue'),
-        meta: { title: '团队详情' }
+        meta: { title: '团队详情', public: true }
       },
       {
         path: 'projects/:projectId',
         name: 'ProjectDetail',
         component: () => import('@/views/ProjectDetail.vue'),
-        meta: { title: '项目看板' }
+        meta: { title: '项目看板', auth: true }
       },
       {
         path: 'notifications',
         name: 'Notifications',
         component: () => import('@/views/Notifications.vue'),
-        meta: { title: '消息中心' }
+        meta: { title: '消息中心', auth: true }
       },
       {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
-        meta: { title: '个人中心' }
+        meta: { title: '个人中心', auth: true }
       },
       {
         path: 'admin',
         name: 'Admin',
         component: () => import('@/views/admin/Dashboard.vue'),
-        meta: { title: '管理后台', role: 'admin' }
+        meta: { title: '管理后台', auth: true, role: 'admin' }
       }
     ]
   }
@@ -69,22 +69,27 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫 —— 未登录跳转到登录页
+// 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('accessToken')
   const isDemo = localStorage.getItem('demoMode') === 'true'
-  // Demo 模式：放行所有页面
+  // Demo 模式下放行所有页面
   if (isDemo && token) {
-    if (to.meta.noAuth) { next('/dashboard') } else { next() }
-    return
+    if (to.meta.noAuth) { return next('/dashboard') }
+    return next()
   }
-  if (!to.meta.noAuth && !token) {
-    next('/login')
-  } else if (to.meta.noAuth && token) {
-    next('/dashboard')
-  } else {
-    next()
+  // 不需要鉴权的页面：login / register
+  if (to.meta.noAuth) {
+    if (token) return next('/dashboard')
+    return next()
   }
+  // 公开页面：任何人可访问
+  if (to.meta.public) {
+    return next()
+  }
+  // 需要鉴权的页面
+  if (!token) return next('/login')
+  next()
 })
 
 export default router

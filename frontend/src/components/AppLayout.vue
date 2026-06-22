@@ -13,9 +13,11 @@ const userStore = useUserStore()
 const isCollapse = ref(false)
 const activeMenu = computed(() => route.path)
 
-// 初始拉取用户信息和未读数
-userStore.fetchUserInfo()
-userStore.fetchUnreadCount()
+// 仅已登录用户拉取用户信息和未读数
+if (localStorage.getItem('accessToken')) {
+  userStore.fetchUserInfo()
+  userStore.fetchUnreadCount()
+}
 
 function handleLogout() {
   userStore.logout()

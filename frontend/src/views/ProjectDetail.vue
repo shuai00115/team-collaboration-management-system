@@ -17,6 +17,7 @@ const project = ref(null)
 const stages = ref([])
 const lists = ref([])
 const tasksMap = ref({})    // { listId: [task, ...] }
+const members = ref([])     // 团队成员（用于执行人选择）
 const loading = ref(true)
 
 // 新增阶段
@@ -50,6 +51,15 @@ async function fetchAll() {
   project.value = pRes.data
   stages.value = sRes.data || []
   lists.value = lRes.data || []
+
+  // 加载团队成员（用于执行人选择）
+  if (project.value?.teamId) {
+    try {
+      const { getTeamMembers } = await import('@/api/team')
+      const mRes = await getTeamMembers(project.value.teamId)
+      members.value = mRes.data || []
+    } catch { members.value = [] }
+  }
 
   // 加载每个列表的任务
   const map = {}
@@ -278,6 +288,11 @@ function canOperate() {
             <el-radio label="medium">中</el-radio>
             <el-radio label="low">低</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item label="执行人">
+          <el-select v-model="taskForm.assigneeId" placeholder="可选，不选即为待认领" clearable style="width:100%">
+            <el-option v-for="m in members" :key="m.userId" :label="m.username" :value="m.userId" />
+          </el-select>
         </el-form-item>
         <el-form-item label="截止日期">
           <el-date-picker v-model="taskForm.dueDate" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%" />

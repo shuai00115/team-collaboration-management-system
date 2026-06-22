@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { updateProfile, changePassword, addSkill, removeSkill } from '@/api/user'
 import request from '@/api/index'
@@ -20,45 +20,81 @@ const pwdForm = ref({
 const skills = ref([])
 const allSkills = ref([])
 
-onMounted(async () => {
+// 添加技能弹窗
+const skillDialogVisible = ref(false)
+const skillForm = reactive({
+  skillId: null,
+  level: 'beginner'
+})
+
+async function loadData() {
   if (userStore.userInfo) {
     profileForm.value.avatar = userStore.userInfo.avatar || ''
     profileForm.value.bio = userStore.userInfo.bio || ''
     skills.value = userStore.userInfo.skills || []
   }
-  const res = await request.get('/skills', { params: { pageSize: 200 } })
-  allSkills.value = res.data?.records || []
-})
+  try {
+    const res = await request.get('/skills', { params: { pageSize: 500 } })
+    allSkills.value = res.data?.records || []
+  } catch { /* ignore */ }
+}
+
+onMounted(loadData)
+
+// 可取选用的技能（还未添加的）
+const availableSkills = ref([])
+
+function openAddSkillDialog() {
+  const existingIds = skills.value.map(s => s.skillId)
+  availableSkills.value = allSkills.value.filter(s => !existingIds.includes(s.skillId))
+  if (!availableSkills.value.length) {
+    ElMessage.warning('所有技能已添加')
+    return
+  }
+  skillForm.skillId = availableSkills.value[0]?.skillId || null
+  skillForm.level = 'beginner'
+  skillDialogVisible.value = true
+}
+
+async function handleAddSkill() {
+  if (!skillForm.skillId) {
+    return ElMessage.warning('请选择一个技能')
+  }
+  try {
+    await addSkill({ skillId: skillForm.skillId, level: skillForm.level })
+    ElMessage.success('技能已添加')
+    skillDialogVisible.value = false
+    await userStore.fetchUserInfo()
+    await loadData()
+  } catch { /* error handled by interceptor */ }
+}
+
+async function handleRemoveSkill(skillId) {
+  try {
+    await removeSkill(skillId)
+    ElMessage.success('技能已移除')
+    await userStore.fetchUserInfo()
+    await loadData()
+  } catch { /* error handled by interceptor */ }
+}
 
 async function handleUpdateProfile() {
-  await updateProfile(profileForm.value)
-  ElMessage.success('资料已更新')
-  userStore.fetchUserInfo()
+  try {
+    await updateProfile(profileForm.value)
+    ElMessage.success('资料已更新')
+    userStore.fetchUserInfo()
+  } catch { /* error handled by interceptor */ }
 }
 
 async function handleChangePwd() {
   if (!pwdForm.value.oldPassword || !pwdForm.value.newPassword) {
     return ElMessage.warning('请填写完整')
   }
-  await changePassword(pwdForm.value)
-  ElMessage.success('密码已修改')
-  pwdForm.value = { oldPassword: '', newPassword: '' }
-}
-
-async function handleAddSkill() {
-  // 简单起见，用第一个未添加的技能
-  const existingIds = skills.value.map(s => s.skillId)
-  const available = allSkills.value.filter(s => !existingIds.includes(s.skillId))
-  if (!available.length) return ElMessage.warning('所有技能已添加')
-  await addSkill({ skillId: available[0].skillId, level: 'beginner' })
-  ElMessage.success('技能已添加')
-  userStore.fetchUserInfo()
-}
-
-async function handleRemoveSkill(skillId) {
-  await removeSkill(skillId)
-  ElMessage.success('技能已移除')
-  userStore.fetchUserInfo()
+  try {
+    await changePassword(pwdForm.value)
+    ElMessage.success('密码已修改')
+    pwdForm.value = { oldPassword: '', newPassword: '' }
+  } catch { /* error handled by interceptor */ }
 }
 </script>
 
@@ -111,8 +147,8 @@ async function handleRemoveSkill(skillId) {
         <el-card class="section-card">
           <template #header>
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <span>我的技能</span>
-              <el-button type="primary" size="small" @click="handleAddSkill">添加技能</el-button>
+              <span>我的技能（{{ skills.length }}）</span>
+              <el-button type="primary" size="small" @click="openAddSkillDialog">添加技能</el-button>
             </div>
           </template>
           <div v-if="skills.length">
@@ -125,7 +161,7 @@ async function handleRemoveSkill(skillId) {
               <span style="color:#999;font-size:12px">·{{ { beginner:'初学', intermediate:'掌握', advanced:'精通' }[sk.level] }}</span>
             </el-tag>
           </div>
-          <el-empty v-else description="暂无技能" />
+          <el-empty v-else description="暂无技能，点击上方按钮添加" />
         </el-card>
 
         <!-- 账户信息 -->
@@ -143,6 +179,31 @@ async function handleRemoveSkill(skillId) {
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 添加技能弹窗 -->
+    <el-dialog v-model="skillDialogVisible" title="添加技能" width="480px">
+      <el-form label-width="80px">
+        <el-form-item label="选择技能" required>
+          <el-select v-model="skillForm.skillId" placeholder="请从技能库中选择" style="width:100%" filterable>
+            <el-option
+              v-for="sk in availableSkills" :key="sk.skillId"
+              :label="`${sk.skillName} (${sk.category})`" :value="sk.skillId"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="熟练度" required>
+          <el-radio-group v-model="skillForm.level">
+            <el-radio label="beginner">初学</el-radio>
+            <el-radio label="intermediate">掌握</el-radio>
+            <el-radio label="advanced">精通</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="skillDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleAddSkill">确认添加</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 

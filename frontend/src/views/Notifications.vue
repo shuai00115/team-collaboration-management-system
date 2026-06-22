@@ -12,15 +12,29 @@ const notifications = ref([])
 const loading = ref(false)
 const total = ref(0)
 const filters = reactive({
-  isRead: undefined,
+  isRead: null,
   pageNum: 1,
   pageSize: 15
 })
+const activeTab = ref('all')
+
+function onTabChange(tab) {
+  activeTab.value = tab
+  if (tab === 'all') filters.isRead = null
+  else if (tab === 'unread') filters.isRead = 0
+  else if (tab === 'read') filters.isRead = 1
+  filters.pageNum = 1
+  fetchList()
+}
 
 async function fetchList() {
   loading.value = true
   try {
-    const res = await getNotifications(filters)
+    const params = { pageNum: filters.pageNum, pageSize: filters.pageSize }
+    if (filters.isRead !== null && filters.isRead !== undefined) {
+      params.isRead = filters.isRead
+    }
+    const res = await getNotifications(params)
     notifications.value = res.data?.records || []
     total.value = res.data?.total || 0
   } finally { loading.value = false }
@@ -64,10 +78,10 @@ const typeLabels = {
     </div>
 
     <el-card>
-      <el-tabs v-model="filters.isRead" @tab-change="(v) => { filters.isRead = v; filters.pageNum = 1; fetchList() }">
-        <el-tab-pane :label="`全部`" :name="undefined" />
-        <el-tab-pane :label="`未读`" :name="0" />
-        <el-tab-pane :label="`已读`" :name="1" />
+      <el-tabs v-model="activeTab" @tab-change="onTabChange">
+        <el-tab-pane label="全部" name="all" />
+        <el-tab-pane label="未读" name="unread" />
+        <el-tab-pane label="已读" name="read" />
       </el-tabs>
 
       <div v-loading="loading">
