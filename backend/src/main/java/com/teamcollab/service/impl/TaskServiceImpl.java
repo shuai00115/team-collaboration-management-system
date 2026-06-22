@@ -215,7 +215,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
                     "您被分配了新的任务",
                     "任务「" + task.getTitle() + "」已分配给您。",
                     "task",
-                    task.getTaskId()
+                    task.getTaskId(),
+                    taskList.getProjectId()
             );
             log.info("已向负责人发送任务分配通知: taskId={}, assigneeId={}",
                     task.getTaskId(), request.getAssigneeId());
@@ -343,13 +344,22 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, Task> implements Ta
 
         // 4. 负责人变更通知
         if (request.getAssigneeId() != null && !request.getAssigneeId().equals(oldAssigneeId)) {
+            // 获取任务所属项目ID
+            Long projectId = null;
+            if (task.getListId() != null) {
+                TaskList taskList = taskListMapper.selectById(task.getListId());
+                if (taskList != null) {
+                    projectId = taskList.getProjectId();
+                }
+            }
             notificationService.sendNotification(
                     request.getAssigneeId(),
                     "task",
                     "您被分配了任务",
                     "任务「" + task.getTitle() + "」已分配给您。",
                     "task",
-                    taskId
+                    taskId,
+                    projectId
             );
             log.info("负责人变更通知已发送: taskId={}, newAssigneeId={}", taskId, request.getAssigneeId());
         }

@@ -205,14 +205,14 @@ const joinRequests = [
 
 // ---- 通知 ----
 const notifications = [
-  { notificationId: 1, userId: 1, type: 'task_assigned', title: '您被分配了新的任务', content: '任务 "实现用户注册接口" 已分配给您，截止日期 ' + future(5).slice(0, 10), relatedType: 'task', relatedId: 1, isRead: 0, createdAt: ago(10) },
-  { notificationId: 2, userId: 1, type: 'task_assigned', title: '您被分配了新的任务', content: '任务 "入队申请审核流程" 已分配给您。', relatedType: 'task', relatedId: 7, isRead: 0, createdAt: ago(6) },
-  { notificationId: 3, userId: 1, type: 'due_reminder', title: '任务即将到期', content: '任务 "设计数据库 ER 图" 将于明天截止。', relatedType: 'task', relatedId: 4, isRead: 0, createdAt: ago(1) },
-  { notificationId: 4, userId: 1, type: 'stage_overdue', title: '阶段超期提醒', content: '阶段 "系统设计" 已超过截止日期，请尽快处理。', relatedType: 'project', relatedId: 1, isRead: 1, createdAt: ago(3) },
-  { notificationId: 5, userId: 1, type: 'join_approved', title: '入队申请已通过', content: '您加入团队 "前端开发小组" 的申请已通过！', relatedType: 'team', relatedId: 2, isRead: 1, createdAt: ago(20) },
-  { notificationId: 6, userId: 1, type: 'new_join_request', title: '收到新的入队申请', content: '用户 wangwu 申请加入团队 "数据分析小分队"', relatedType: 'join_request', relatedId: 1, isRead: 1, createdAt: ago(7) },
-  { notificationId: 7, userId: 1, type: 'task_assigned', title: '您被分配了新的任务', content: '任务 "编写 DDL 建表脚本" 已分配给您。', relatedType: 'task', relatedId: 16, isRead: 1, createdAt: ago(20) },
-  { notificationId: 8, userId: 1, type: 'task_updated', title: '任务信息已更新', content: '任务 "修复登录页样式问题" 优先级已从 中 改为 低。', relatedType: 'task', relatedId: 8, isRead: 0, createdAt: ago(0, 1) },
+  { notificationId: 1, userId: 1, type: 'task_assigned', title: '您被分配了新的任务', content: '任务 "实现用户注册接口" 已分配给您，截止日期 ' + future(5).slice(0, 10), relatedType: 'task', relatedId: 1, projectId: 1, isRead: 0, createdAt: ago(10) },
+  { notificationId: 2, userId: 1, type: 'task_assigned', title: '您被分配了新的任务', content: '任务 "入队申请审核流程" 已分配给您。', relatedType: 'task', relatedId: 7, projectId: 1, isRead: 0, createdAt: ago(6) },
+  { notificationId: 3, userId: 1, type: 'due_reminder', title: '任务即将到期', content: '任务 "设计数据库 ER 图" 将于明天截止。', relatedType: 'task', relatedId: 4, projectId: 1, isRead: 0, createdAt: ago(1) },
+  { notificationId: 4, userId: 1, type: 'stage_overdue', title: '阶段超期提醒', content: '阶段 "系统设计" 已超过截止日期，请尽快处理。', relatedType: 'project', relatedId: 1, projectId: 1, isRead: 1, createdAt: ago(3) },
+  { notificationId: 5, userId: 1, type: 'join_approved', title: '入队申请已通过', content: '您加入团队 "前端开发小组" 的申请已通过！', relatedType: 'team', relatedId: 2, projectId: null, isRead: 1, createdAt: ago(20) },
+  { notificationId: 6, userId: 1, type: 'new_join_request', title: '收到新的入队申请', content: '用户 wangwu 申请加入团队 "数据分析小分队"', relatedType: 'join_request', relatedId: 1, projectId: null, isRead: 1, createdAt: ago(7) },
+  { notificationId: 7, userId: 1, type: 'task_assigned', title: '您被分配了新的任务', content: '任务 "编写 DDL 建表脚本" 已分配给您。', relatedType: 'task', relatedId: 16, projectId: 1, isRead: 1, createdAt: ago(20) },
+  { notificationId: 8, userId: 1, type: 'task_updated', title: '任务信息已更新', content: '任务 "修复登录页样式问题" 优先级已从 中 改为 低。', relatedType: 'task', relatedId: 8, projectId: 1, isRead: 0, createdAt: ago(0, 1) },
 ]
 
 // ---- 个人工作台数据 ----

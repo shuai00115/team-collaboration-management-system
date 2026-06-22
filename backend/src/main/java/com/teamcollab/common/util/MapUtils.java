@@ -1,7 +1,9 @@
 package com.teamcollab.common.util;
 
 import java.math.BigInteger;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -50,6 +52,17 @@ public final class MapUtils {
         Object value = map.get(key);
         if (value == null) return null;
         if (value instanceof LocalDateTime) return (LocalDateTime) value;
+        return null;
+    }
+
+    /** 从 Map 中安全获取 LocalDate 值（兼容 MySQL DATE 列的多种 JDBC 返回类型） */
+    public static LocalDate getLocalDate(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return null;
+        if (value instanceof LocalDate) return (LocalDate) value;
+        if (value instanceof java.sql.Date) return ((java.sql.Date) value).toLocalDate();
+        if (value instanceof Date) return ((Date) value).toInstant()
+                .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
         return null;
     }
 }

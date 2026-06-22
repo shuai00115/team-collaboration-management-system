@@ -76,9 +76,12 @@ public class TaskListServiceImpl extends ServiceImpl<TaskListMapper, TaskList> i
             response.setListId(MapUtils.getLong(row, "list_id"));
             response.setName((String) row.get("name"));
             response.setPosition(((Number) row.get("position")).intValue());
-            // is_default=1 表示系统默认列表
-            response.setIsDefault(row.get("is_default") != null
-                    && ((Number) row.get("is_default")).intValue() == 1);
+            // is_default=1 表示系统默认列表（兼容 Boolean/Number 两种 JDBC 返回类型）
+            Object isDef = row.get("is_default");
+            response.setIsDefault(isDef != null && (
+                (isDef instanceof Boolean && (Boolean) isDef) ||
+                (isDef instanceof Number && ((Number) isDef).intValue() == 1)
+            ));
             // 任务数量统计
             response.setTaskCount(row.get("task_count") != null
                     ? ((Number) row.get("task_count")).intValue() : 0);

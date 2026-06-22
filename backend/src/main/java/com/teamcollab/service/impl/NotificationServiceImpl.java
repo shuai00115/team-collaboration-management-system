@@ -96,6 +96,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
             response.setContent(notification.getContent());
             response.setRelatedType(notification.getRelatedType());
             response.setRelatedId(notification.getRelatedId());
+            response.setProjectId(notification.getProjectId());
             response.setIsRead(notification.getIsRead());
             response.setCreatedAt(notification.getCreatedAt());
             return response;
@@ -196,7 +197,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void sendNotification(Long userId, String type, String title, String content,
-                                  String relatedType, Long relatedId) {
+                                  String relatedType, Long relatedId, Long projectId) {
         // 构建通知实体
         Notification notification = new Notification();
         notification.setUserId(userId);
@@ -205,6 +206,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
         notification.setContent(content);
         notification.setRelatedType(relatedType);
         notification.setRelatedId(relatedId);
+        notification.setProjectId(projectId);
         notification.setIsRead(0);                  // 默认为未读
         notification.setCreatedAt(LocalDateTime.now());
 
@@ -235,7 +237,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void sendToTeamLeader(Long teamId, String type, String title, String content,
-                                  String relatedType, Long relatedId) {
+                                  String relatedType, Long relatedId, Long projectId) {
         // 查询团队队长（role = "leader"）
         List<TeamMember> leaders = teamMemberMapper.selectList(
                 new LambdaQueryWrapper<TeamMember>()
@@ -249,7 +251,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
 
         // 向每位队长发送通知（理论上每个团队只有一位队长）
         for (TeamMember leader : leaders) {
-            sendNotification(leader.getUserId(), type, title, content, relatedType, relatedId);
+            sendNotification(leader.getUserId(), type, title, content, relatedType, relatedId, projectId);
         }
 
         log.info("已向团队队长发送通知: teamId={}, type={}, 队长数={}",
@@ -275,7 +277,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void sendToTeamMembers(Long teamId, String type, String title, String content,
-                                   String relatedType, Long relatedId, Long excludeUserId) {
+                                   String relatedType, Long relatedId, Long excludeUserId, Long projectId) {
         // 查询团队所有成员
         List<TeamMember> members = teamMemberMapper.selectList(
                 new LambdaQueryWrapper<TeamMember>()
@@ -293,7 +295,7 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
             if (excludeUserId != null && excludeUserId.equals(member.getUserId())) {
                 continue;
             }
-            sendNotification(member.getUserId(), type, title, content, relatedType, relatedId);
+            sendNotification(member.getUserId(), type, title, content, relatedType, relatedId, projectId);
             sentCount++;
         }
 

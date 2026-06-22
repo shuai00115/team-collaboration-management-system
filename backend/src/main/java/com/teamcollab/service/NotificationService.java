@@ -80,8 +80,9 @@ public interface NotificationService extends IService<Notification> {
      * @param content     通知内容
      * @param relatedType 关联业务类型（如 team/project/task），可为null
      * @param relatedId   关联业务ID，可为null
+     * @param projectId   关联项目ID，可为null
      */
-    void sendNotification(Long userId, String type, String title, String content, String relatedType, Long relatedId);
+    void sendNotification(Long userId, String type, String title, String content, String relatedType, Long relatedId, Long projectId);
 
     /**
      * 向团队队长发送通知
@@ -96,8 +97,9 @@ public interface NotificationService extends IService<Notification> {
      * @param content     通知内容
      * @param relatedType 关联业务类型，可为null
      * @param relatedId   关联业务ID，可为null
+     * @param projectId   关联项目ID，可为null
      */
-    void sendToTeamLeader(Long teamId, String type, String title, String content, String relatedType, Long relatedId);
+    void sendToTeamLeader(Long teamId, String type, String title, String content, String relatedType, Long relatedId, Long projectId);
 
     /**
      * 向团队全体成员发送通知
@@ -113,6 +115,7 @@ public interface NotificationService extends IService<Notification> {
      * @param relatedType   关联业务类型，可为null
      * @param relatedId     关联业务ID，可为null
      * @param excludeUserId 需要排除的用户ID（如操作发起者本人），可为null表示不排除
+     * @param projectId     关联项目ID，可为null
      */
-    void sendToTeamMembers(Long teamId, String type, String title, String content, String relatedType, Long relatedId, Long excludeUserId);
+    void sendToTeamMembers(Long teamId, String type, String title, String content, String relatedType, Long relatedId, Long excludeUserId, Long projectId);
 }

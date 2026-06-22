@@ -449,7 +449,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 "您已被移出团队",
                 "您已被移出团队「" + teamName + "」",
                 "team",
-                teamId
+                teamId,
+                null  // projectId: 成员移除不关联项目
         );
 
         log.info("成员已被移除: teamId={}, memberId={}, operatorId={}", teamId, memberId, leaderId);

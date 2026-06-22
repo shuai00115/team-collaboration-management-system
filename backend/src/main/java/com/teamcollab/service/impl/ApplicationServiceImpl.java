@@ -138,7 +138,8 @@ public class ApplicationServiceImpl extends ServiceImpl<JoinRequestMapper, JoinR
                 "收到新的入队申请",
                 "有用户申请加入您的团队「" + team.getName() + "」",
                 "join_request",
-                request.getRequestId()
+                request.getRequestId(),
+                null  // projectId: 入队申请不关联项目
         );
 
         log.info("入队申请提交成功: requestId={}, teamId={}, userId={}",
@@ -321,7 +322,8 @@ public class ApplicationServiceImpl extends ServiceImpl<JoinRequestMapper, JoinR
                     "入队申请已通过",
                     "恭喜！您申请加入团队「" + team.getName() + "」的请求已通过审核，欢迎加入！",
                     "team",
-                    teamId
+                    teamId,
+                    null  // projectId: 入队申请不关联项目
             );
 
             log.info("入队申请已批准: requestId={}, applicantId={}, teamId={}",
@@ -343,7 +345,8 @@ public class ApplicationServiceImpl extends ServiceImpl<JoinRequestMapper, JoinR
                     "入队申请已被拒绝",
                     "很遗憾，您申请加入团队「" + teamName + "」的请求已被拒绝。",
                     "team",
-                    teamId
+                    teamId,
+                    null  // projectId: 入队申请不关联项目
             );
 
             log.info("入队申请已拒绝: requestId={}, applicantId={}", requestId, request.getUserId());

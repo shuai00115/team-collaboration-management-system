@@ -205,6 +205,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     content         TEXT         DEFAULT NULL,
     related_type    VARCHAR(50)  DEFAULT NULL        COMMENT '关联实体类型: team, project, task, join_request',
     related_id      BIGINT UNSIGNED DEFAULT NULL     COMMENT '关联实体ID',
+    project_id      BIGINT UNSIGNED DEFAULT NULL     COMMENT '关联项目ID，方便前端直接跳转',
     is_read         TINYINT(1)   NOT NULL DEFAULT 0  COMMENT '是否已读: 0=未读, 1=已读',
     created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,

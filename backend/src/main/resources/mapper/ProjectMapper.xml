@@ -84,7 +84,7 @@
         LEFT JOIN tasks tk ON s.stage_id = tk.stage_id
         LEFT JOIN task_lists tl ON tk.list_id = tl.list_id
         WHERE s.project_id = #{projectId}
-        GROUP BY s.stage_id
+        GROUP BY s.stage_id, s.project_id, s.name, s.description, s.order_index, s.start_date, s.end_date, s.status
         ORDER BY s.order_index ASC
     </select>
 

@@ -86,12 +86,11 @@ public class StageServiceImpl extends ServiceImpl<StageMapper, Stage> implements
      */
     @Override
     public List<StageResponse> getProjectStages(Long projectId, Long userId) {
-        // 1. 获取项目所属团队并校验成员权限
+        // 1. 获取项目所属团队
         Long teamId = projectService.getProjectTeamId(projectId);
         if (teamId == null) {
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
-        teamService.checkIsMember(teamId, userId);
 
         // 2. 查询阶段列表（含任务统计）
         List<Map<String, Object>> stageRows = stageMapper.selectByProjectId(projectId);
@@ -103,12 +102,8 @@ public class StageServiceImpl extends ServiceImpl<StageMapper, Stage> implements
             response.setProjectId(MapUtils.getLong(row, "project_id"));
             response.setName((String) row.get("name"));
             response.setDescription((String) row.get("description"));
-            if (row.get("start_date") != null) {
-                response.setStartDate(((java.sql.Date) row.get("start_date")).toLocalDate());
-            }
-            if (row.get("end_date") != null) {
-                response.setEndDate(((java.sql.Date) row.get("end_date")).toLocalDate());
-            }
+            response.setStartDate(MapUtils.getLocalDate(row, "start_date"));
+            response.setEndDate(MapUtils.getLocalDate(row, "end_date"));
             response.setOrderIndex(((Number) row.get("order_index")).intValue());
             response.setStatus((String) row.get("status"));
 

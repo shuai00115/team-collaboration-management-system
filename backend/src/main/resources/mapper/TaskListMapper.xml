@@ -25,7 +25,7 @@
         FROM task_lists tl
         LEFT JOIN tasks tk ON tl.list_id = tk.list_id
         WHERE tl.project_id = #{projectId}
-        GROUP BY tl.list_id
+        GROUP BY tl.list_id, tl.project_id, tl.name, tl.position, tl.is_default, tl.created_at
         ORDER BY tl.position ASC
     </select>
 

@@ -75,10 +75,7 @@ public class StatsServiceImpl implements StatsService {
      */
     @Override
     public TeamStatsResponse getTeamStats(Long teamId, Long userId, Long projectId) {
-        // 1. 校验团队成员权限
-        teamService.checkIsMember(teamId, userId);
-
-        // 2. 查询团队级别的任务统计
+        // 1. 查询团队级别的任务统计
         Map<String, Object> overview = taskMapper.selectTeamTaskStats(teamId, projectId);
         if (overview == null || overview.isEmpty()) {
             log.warn("团队无统计数据: teamId={}, projectId={}", teamId, projectId);
@@ -164,10 +161,7 @@ public class StatsServiceImpl implements StatsService {
      */
     @Override
     public MemberStatsResponse getMemberStats(Long teamId, Long memberId, Long userId) {
-        // 1. 校验团队成员权限
-        teamService.checkIsMember(teamId, userId);
-
-        // 2. 查询该成员的详细统计
+        // 1. 查询该成员的详细统计
         Map<String, Object> detail = taskMapper.selectMemberDetailStats(teamId, memberId);
         if (detail == null || detail.get("user_id") == null) {
             log.warn("未找到成员统计信息: teamId={}, memberId={}", teamId, memberId);

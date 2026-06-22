@@ -8,6 +8,7 @@ import com.teamcollab.entity.Task;
 import com.teamcollab.mapper.NotificationMapper;
 import com.teamcollab.mapper.ProjectMapper;
 import com.teamcollab.mapper.StageMapper;
+import com.teamcollab.mapper.TaskListMapper;
 import com.teamcollab.mapper.TaskMapper;
 import com.teamcollab.mapper.TeamMemberMapper;
 import com.teamcollab.service.NotificationService;
@@ -37,6 +38,7 @@ import java.util.List;
 public class NotificationScheduler {
 
     private final TaskMapper taskMapper;
+    private final TaskListMapper taskListMapper;
     private final StageMapper stageMapper;
     private final TeamMemberMapper teamMemberMapper;
     private final ProjectMapper projectMapper;
@@ -73,6 +75,15 @@ public class NotificationScheduler {
                             task.getAssigneeId(), "due_reminder");
 
                     if (existingCount == 0) {
+                        // 解析任务所属项目ID
+                        Long projectIdForTask = null;
+                        if (task.getListId() != null) {
+                            com.teamcollab.entity.TaskList tl =
+                                    taskListMapper.selectById(task.getListId());
+                            if (tl != null) {
+                                projectIdForTask = tl.getProjectId();
+                            }
+                        }
                         // 发送截止日期提醒通知
                         notificationService.sendNotification(
                                 task.getAssigneeId(),
@@ -80,7 +91,8 @@ public class NotificationScheduler {
                                 "任务即将到期",
                                 "任务 \"" + task.getTitle() + "\" 的截止日期即将到达，请及时处理。",
                                 "task",
-                                task.getTaskId()
+                                task.getTaskId(),
+                                projectIdForTask
                         );
                         count++;
                     }
@@ -124,7 +136,8 @@ public class NotificationScheduler {
                                 "阶段已超期",
                                 "阶段 \"" + stage.getName() + "\" 已超过截止日期，请及时处理。",
                                 "stage",
-                                stage.getStageId()
+                                stage.getStageId(),
+                                stage.getProjectId()
                         );
                         count++;
                     } else {

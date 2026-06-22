@@ -78,14 +78,11 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
      */
     @Override
     public Page<ProjectBriefResponse> getTeamProjects(Long teamId, Long userId, int pageNum, int pageSize) {
-        // 1. 校验团队成员权限
-        teamService.checkIsMember(teamId, userId);
-
-        // 2. 分页查询项目列表（含任务统计）
+        // 1. 分页查询项目列表（含任务统计）
         Page<Project> queryPage = new Page<>(pageNum, pageSize);
         Page<Map<String, Object>> resultPage = projectMapper.selectByTeamId(queryPage, teamId);
 
-        // 3. 转换每一行为 ProjectBriefResponse
+        // 2. 转换每一行为 ProjectBriefResponse
         List<ProjectBriefResponse> records = resultPage.getRecords().stream().map(row -> {
             ProjectBriefResponse response = new ProjectBriefResponse();
             response.setProjectId(MapUtils.getLong(row, "project_id"));
@@ -114,7 +111,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
             return response;
         }).collect(Collectors.toList());
 
-        // 4. 构建分页响应
+        // 3. 构建分页响应
         Page<ProjectBriefResponse> responsePage = new Page<>(pageNum, pageSize);
         responsePage.setTotal(resultPage.getTotal());
         responsePage.setRecords(records);
@@ -209,11 +206,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
 
-        // 2. 校验团队成员权限
+        // 2. 组装项目基本信息
         Long teamId = MapUtils.getLong(detailRow, "team_id");
-        teamService.checkIsMember(teamId, userId);
-
-        // 3. 组装项目基本信息
         ProjectDetailResponse response = new ProjectDetailResponse();
         response.setProjectId(MapUtils.getLong(detailRow, "project_id"));
         response.setTeamId(teamId);
@@ -227,7 +221,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
             response.setUpdatedAt((LocalDateTime) detailRow.get("updated_at"));
         }
 
-        // 4. 组装任务统计信息
+        // 3. 组装任务统计信息
         int total = detailRow.get("total_tasks") != null
                 ? ((Number) detailRow.get("total_tasks")).intValue() : 0;
         int completed = detailRow.get("completed_tasks") != null
@@ -246,7 +240,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
                 ? Math.round(completed * 1000.0 / total) / 1000.0 : 0.0);
         response.setTaskStats(stats);
 
-        // 5. 组装阶段列表（含各阶段完成率）
+        // 4. 组装阶段列表（含各阶段完成率）
         List<Map<String, Object>> stageRows = projectMapper.selectStagesByProjectId(projectId);
         List<ProjectDetailResponse.StageBriefVO> stages = stageRows.stream().map(s -> {
             ProjectDetailResponse.StageBriefVO vo = new ProjectDetailResponse.StageBriefVO();
@@ -254,12 +248,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
             vo.setName((String) s.get("name"));
             vo.setStatus((String) s.get("status"));
             vo.setOrderIndex(((Number) s.get("order_index")).intValue());
-            if (s.get("start_date") != null) {
-                vo.setStartDate(((java.sql.Date) s.get("start_date")).toLocalDate());
-            }
-            if (s.get("end_date") != null) {
-                vo.setEndDate(((java.sql.Date) s.get("end_date")).toLocalDate());
-            }
+            vo.setStartDate(MapUtils.getLocalDate(s, "start_date"));
+            vo.setEndDate(MapUtils.getLocalDate(s, "end_date"));
             int stageTotal = s.get("stage_tasks") != null
                     ? ((Number) s.get("stage_tasks")).intValue() : 0;
             int stageCompleted = s.get("stage_completed") != null

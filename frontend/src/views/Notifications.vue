@@ -49,9 +49,10 @@ async function handleRead(notif) {
     userStore.unreadCount = Math.max(0, userStore.unreadCount - 1)
   }
   // 跳转到关联实体
-  const { relatedType, relatedId } = notif
+  const { relatedType, relatedId, projectId } = notif
   if (relatedType === 'team') router.push(`/teams/${relatedId}`)
-  else if (relatedType === 'task') router.push(`/projects/${relatedId}`)
+  else if ((relatedType === 'task' || relatedType === 'stage') && projectId) router.push(`/projects/${projectId}`)
+  else if (relatedType === 'project' || relatedType === 'task' || relatedType === 'stage') router.push(`/projects/${relatedId}`)
 }
 
 async function handleMarkAll() {

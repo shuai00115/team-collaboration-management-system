@@ -47,7 +47,7 @@
                 )
             </if>
         </where>
-        GROUP BY t.team_id
+        GROUP BY t.team_id, t.name, t.description, t.creator_id, t.max_members, t.status, t.created_at, t.updated_at, u.username
         <if test="minMembers != null">
             HAVING COUNT(tm.user_id) &gt;= #{minMembers}
         </if>
@@ -72,7 +72,7 @@
         LEFT JOIN team_members tm ON t.team_id = tm.team_id
         LEFT JOIN users u ON t.creator_id = u.user_id
         WHERE t.team_id = #{teamId}
-        GROUP BY t.team_id
+        GROUP BY t.team_id, t.name, t.description, t.creator_id, t.max_members, t.status, t.created_at, t.updated_at, u.username
     </select>
 
     <!-- 查询团队成员列表（leader 排在首位，其余按加入时间排序） -->
@@ -120,7 +120,7 @@
                 AND t.status = #{status}
             </if>
         </where>
-        GROUP BY t.team_id
+        GROUP BY t.team_id, t.name, t.description, t.creator_id, t.max_members, t.status, t.created_at, t.updated_at, u.username
         ORDER BY t.created_at DESC
     </select>
 

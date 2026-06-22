@@ -64,6 +64,12 @@ public class Notification implements Serializable {
     private Long relatedId;
 
     /**
+     * 关联项目ID，方便前端点击通知后直接跳转到对应项目
+     */
+    @Schema(description = "关联项目ID")
+    private Long projectId;
+
+    /**
      * 是否已读：0-未读，1-已读
      */
     @Schema(description = "是否已读")
