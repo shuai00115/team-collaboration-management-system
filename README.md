@@ -379,7 +379,15 @@ onMounted：fetchUserInfo() + fetchUnreadCount()
 ### 1. 初始化数据库
 
 ```bash
-mysql -u root -p123456 -P 3307 -h 127.0.0.1 < init.sql
+mysql -u "你的数据库用户名" -p"你的数据库密码" -P 3306 -h 127.0.0.1 < init.sql
+```
+### 1.5. 修改后端文件连接本地数据库
+在`.\backend\src\main\resources\application.yml`文件中修改如下参数
+```bash
+  datasource:
+    url: jdbc:mysql://localhost:"你的Mysql数据库端口"/team_collab?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&sslMode=DISABLED
+    username: "你的数据库用户名"
+    password: "你的数据库密码"
 ```
 
 ### 2. 启动后端
