@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.TeamRequiredSkillMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.TeamRequiredSkill">
+        <result column="team_id" property="teamId"/>
+        <result column="skill_id" property="skillId"/>
+    </resultMap>
+
+    <!-- 查询指定团队的所有所需技能（含技能详情） -->
+    <select id="selectByTeamId" resultType="java.util.Map">
+        SELECT
+            trs.team_id,
+            trs.skill_id,
+            s.skill_name,
+            s.category
+        FROM team_required_skills trs
+        INNER JOIN skills s ON trs.skill_id = s.skill_id
+        WHERE trs.team_id = #{teamId}
+        ORDER BY s.category, s.skill_name
+    </select>
+
+    <!-- 删除指定团队的所有所需技能关联 -->
+    <delete id="deleteByTeamId">
+        DELETE FROM team_required_skills WHERE team_id = #{teamId}
+    </delete>
+
+</mapper>

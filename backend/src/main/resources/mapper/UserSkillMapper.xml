@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.UserSkillMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.UserSkill">
+        <result column="user_id" property="userId"/>
+        <result column="skill_id" property="skillId"/>
+        <result column="level" property="level"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 查询指定用户的所有技能（含技能详情） -->
+    <select id="selectUserSkills" resultType="java.util.Map">
+        SELECT
+            us.user_id,
+            us.skill_id,
+            us.level,
+            s.skill_name,
+            s.category,
+            us.created_at
+        FROM user_skills us
+        INNER JOIN skills s ON us.skill_id = s.skill_id
+        WHERE us.user_id = #{userId}
+        ORDER BY s.category, s.skill_name
+    </select>
+
+    <!-- 删除用户与指定技能的关联 -->
+    <delete id="deleteByUserAndSkill">
+        DELETE FROM user_skills
+        WHERE user_id = #{userId} AND skill_id = #{skillId}
+    </delete>
+
+    <!-- 检查用户与技能的关联是否存在 -->
+    <select id="countByUserAndSkill" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM user_skills
+        WHERE user_id = #{userId} AND skill_id = #{skillId}
+    </select>
+
+</mapper>

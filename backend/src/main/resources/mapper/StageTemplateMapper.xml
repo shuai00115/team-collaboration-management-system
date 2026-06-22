@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.StageTemplateMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.StageTemplate">
+        <id column="template_id" property="templateId"/>
+        <result column="template_name" property="templateName"/>
+        <result column="stages_json" property="stagesJson"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 查询所有阶段模板（含阶段数量统计） -->
+    <select id="selectAllWithCount" resultType="java.util.Map">
+        SELECT
+            template_id,
+            template_name,
+            stages_json,
+            JSON_LENGTH(stages_json) AS stage_count,
+            created_at
+        FROM stage_templates
+        ORDER BY created_at
+    </select>
+
+</mapper>

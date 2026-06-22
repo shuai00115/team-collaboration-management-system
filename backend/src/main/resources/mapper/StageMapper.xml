@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.StageMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.Stage">
+        <id column="stage_id" property="stageId"/>
+        <result column="project_id" property="projectId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="order_index" property="orderIndex"/>
+        <result column="start_date" property="startDate"/>
+        <result column="end_date" property="endDate"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <!-- 查询指定项目的所有阶段（含任务数量+完成数统计） -->
+    <select id="selectByProjectId" resultType="java.util.Map">
+        SELECT
+            s.stage_id,
+            s.project_id,
+            s.name,
+            s.description,
+            s.order_index,
+            s.start_date,
+            s.end_date,
+            s.status,
+            COUNT(tk.task_id) AS task_count,
+            SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS completed_count
+        FROM stages s
+        LEFT JOIN tasks tk ON s.stage_id = tk.stage_id
+        LEFT JOIN task_lists tl ON tk.list_id = tl.list_id
+        WHERE s.project_id = #{projectId}
+        GROUP BY s.stage_id, s.project_id, s.name, s.description, s.order_index, s.start_date, s.end_date, s.status
+        ORDER BY s.order_index ASC
+    </select>
+
+    <!-- 统计指定阶段下的任务数量 -->
+    <select id="countTasksByStageId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM tasks WHERE stage_id = #{stageId}
+    </select>
+
+    <!-- 查询指定项目下阶段的最大排序索引 -->
+    <select id="maxOrderIndex" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(order_index), -1)
+        FROM stages
+        WHERE project_id = #{projectId}
+    </select>
+
+</mapper>

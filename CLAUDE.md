@@ -9,57 +9,116 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Structure
 
 ```
-├── 项目框架文档.md       # Feature specs + complete DB design (DDL, ER diagram, triggers, indexes)
-├── RESTful-API接口文档.md # 58 RESTful API endpoint specifications
-├── init.sql              # Executable DDL script (13 tables, MySQL 8.0)
-├── README.md             # Architecture overview + function catalog
-└── frontend/             # Vue 3 SPA demo (Vite + Element Plus + Pinia + Axios)
+├── 项目框架文档.md          # Feature specs + complete DB design (DDL, ER diagram, triggers, indexes)
+├── RESTful-API接口文档.md    # 58 RESTful API endpoint specifications
+├── init.sql                 # Executable DDL script (13 tables, MySQL 8.0)
+├── README.md                # Architecture overview + function catalog
+├── frontend/                # Vue 3 SPA (Vite + Element Plus + Pinia + Axios)
+│   └── src/
+│       ├── api/             #   Axios wrapper + 7 API modules
+│       ├── mock/            #   Demo-mode data & interceptor (no backend needed)
+│       ├── router/          #   Vue Router with auth guard
+│       ├── stores/          #   Pinia store (user info + unread count)
+│       ├── components/      #   AppLayout (sidebar + header)
+│       └── views/           #   9 page components
+└── backend/                 # Spring Boot 3.3.3 REST API server (Java 21)
+    └── src/main/java/com/teamcollab/
+        ├── controller/      #   12 REST controllers (58 endpoints)
+        ├── service/         #   12 service interfaces + 12 implementations
+        ├── mapper/          #   13 MyBatis-Plus mapper interfaces (+ 13 XMLs)
+        ├── entity/          #   13 JPA entity classes
+        ├── dto/             #   50+ request/response DTOs
+        ├── security/        #   JWT token provider + filter + Spring Security config
+        ├── common/          #   Shared enums, exceptions, response wrapper, utils
+        ├── config/          #   CORS, MyBatis-Plus, Jackson, Knife4j, WebSocket, Scheduler
+        ├── websocket/       #   Real-time notification push
+        └── scheduler/       #   Scheduled tasks (deadline reminders)
 ```
 
 ## Commands
 
+### Frontend (port 5173)
+
 ```bash
-# Frontend dev server (port 5173, proxies /api → localhost:8080)
-cd frontend && npm run dev
-
-# Frontend build
-cd frontend && npm run build
-
-# Database setup (MySQL 8.0, port 3307, user:root, password:123456)
-mysql -u root -p123456 -P 3307 -h 127.0.0.1 < init.sql
+cd frontend
+npm install                # Install dependencies
+npm run dev                # Dev server (proxies /api → localhost:8080)
+npm run build              # Production build → dist/
 ```
 
-There is no backend implementation in this repo — the frontend expects a REST API at `localhost:8080/api/v1`. When implementing the backend, follow the interface specs in `RESTful-API接口文档.md`.
+### Backend (port 8080)
+
+```bash
+cd backend
+mvn spring-boot:run        # Start server
+mvn clean package          # Build JAR
+```
+
+### Database (MySQL 8.0, port 3307)
+
+```bash
+mysql -u root -p123456 -P 3307 -h 127.0.0.1 < init.sql          # Root-level init
+mysql -u root -p123456 -P 3307 -h 127.0.0.1 < backend/init.sql   # Backend copy
+```
+
+Credentials: `root` / `123456` on `localhost:3307`, database `team_collab` (utf8mb4).
+
+### API Docs
+
+After starting the backend, browse: **http://localhost:8080/doc.html** (Knife4j / Swagger UI).
 
 ## Architecture
 
-**Three-tier design:**
-- **Database**: MySQL 8.0 InnoDB, database `team_collab`, 13 tables with foreign keys, unique constraints, row-level locking for concurrency control
-- **Backend** (planned, not implemented): RESTful API at `/api/v1/*`, JWT Bearer auth, unified response `{code, msg, data}`
-- **Frontend**: Vue 3 Composition API (`<script setup>`), Element Plus UI, SPA with 9 routes
+**Three-tier full-stack design:**
 
-**Key design decisions:**
-- All IDs use `BIGINT UNSIGNED AUTO_INCREMENT`
-- JWT token stored in `localStorage.accessToken`, auto-attached by Axios request interceptor (`src/api/index.js`)
-- Route guard in `src/router/index.js` redirects unauthenticated users to `/login`
-- Pinia store (`src/stores/user.js`) manages `userInfo` and `unreadCount` globally
-- Vite `@` alias resolves to `src/` directory
-- API proxy configured in `vite.config.js`: `/api` → `http://localhost:8080`
+| Tier | Technology | Key Libraries |
+|------|-----------|---------------|
+| **Frontend** | Vue 3 (Composition API) | Element Plus 2.x, Vue Router 4, Pinia 2, Axios, Vite 8 |
+| **Backend** | Spring Boot 3.3.3 + Java 21 | Spring Security, MyBatis-Plus 3.5.7, jjwt 0.12.6, Knife4j 4.5, Hutool 5.8 |
+| **Database** | MySQL 8.0 InnoDB | database `team_collab`, 13 tables |
 
-**Database naming conventions:**
-- Tables/columns: `snake_case`
-- Primary keys: `{entity}_id` (e.g., `user_id`, `team_id`)
-- Timestamps: `created_at`, `updated_at` (with `ON UPDATE CURRENT_TIMESTAMP`)
-- ENUMs used for status fields: `team.status` (recruiting/closed), `stage.status` (not_started/in_progress/completed), `task.priority` (high/medium/low), `join_request.status` (pending/approved/rejected)
+**Backend layered pattern:**
+```
+Controller (@RestController) → Service interface → ServiceImpl → Mapper (MyBatis-Plus) → XML/Annotation SQL
+                                        ↕
+                               Entity / DTO / Enum
+```
 
-**Frontend conventions:**
-- API modules in `src/api/` mirror backend resource paths (one file per resource group)
-- All API functions return raw Axios response — the interceptor in `api/index.js` handles `code !== 200` as errors
-- Vue components use Element Plus Chinese locale (`zh-cn`)
-- Page components are lazy-loaded via `() => import(...)` in router
-- URL paths use kebab-case with path params in kebab-case: `/teams/{team-id}/applications/{request-id}`
+**Unified response format:** All controllers return `Result<T>` — `{ code: int, msg: string, data: T }`.  
+**Pagination:** Wrapped in `PageResult<T>` — `{ pageNum, pageSize, total, totalPages, records }`.  
+**Login response:** Returns `{ accessToken, tokenType: "Bearer", expiresIn, userInfo }`.
 
-**Concurrency control (critical for backend implementation):**
-- Joining a team uses `SELECT ... FOR UPDATE` row-level lock on the `teams` row to prevent exceeding `max_members`
-- Four `UNIQUE` constraints prevent duplicates: `user_skills(user_id,skill_id)`, `team_members(team_id,user_id)`, `join_requests(user_id,team_id)`, `users.username`, `users.email`
-- Five triggers auto-create records: creator becomes team leader, projects get default task lists, notifications fire on application review and task assignment
+## Key Design Decisions
+
+### Backend
+
+- **Authentication:** Spring Security filter chain. JWT stored client-side, sent as `Authorization: Bearer <token>`. Token contains `userId`, `username`, `role`. Expiration: 604800s (7 days).
+- **Public endpoints:** `/api/v1/auth/**`, `/api/v1/skills/**`, `GET /api/v1/teams`, `GET /api/v1/teams/{id}`, `/api/v1/health`, `/ws/**`.
+- **Current user injection:** Custom `@CurrentUser` annotation resolved by `CurrentUserResolver` extracts `userId` from JWT and injects directly into controller method parameters.
+- **Role enforcement:** `@RequireLeader` and `@RequireAdmin` annotations on service methods, checked in implementation layer.
+- **Exception handling:** `GlobalExceptionHandler` catches `BusinessException`, `ConflictException`, `ForbiddenException`, `ResourceNotFoundException`, `UnauthorizedException` and maps them to proper HTTP status codes + `Result` responses.
+- **MyBatis-Plus:** Entity → table mapping via `@TableName`. `application.yml` has `map-underscore-to-camel-case: true`. Custom SQL in `src/main/resources/mapper/*.xml`.
+- **Pagination interceptor:** MyBatis-Plus `PaginationInnerInterceptor` with MySQL dialect, max 500 rows per page.
+- **Scheduled tasks:** `NotificationScheduler` runs periodic checks for task/stage due-date reminders.
+- **WebSocket:** `NotificationWebSocketHandler` + `WebSocketSessionManager` push real-time notifications to connected clients at `/ws`.
+
+### Frontend
+
+- **Demo mode:** `localStorage.demoMode = 'true'` + fake token → all Axios requests intercepted in `src/api/index.js` → mock data returned from `src/mock/index.js`. No backend required to browse the UI.
+- **Auth routing:** Routes with `meta.auth: true` require login. Routes with `meta.public: true` (recruitment wall, team detail) are open to anyone. Routes with `meta.noAuth: true` (login, register) redirect to dashboard if already logged in.
+- **API modules:** `src/api/*.js` mirror backend resource paths. Each function is a thin wrapper around the Axios instance.
+- **Vite `@` alias:** Resolves to `src/` directory.
+
+### Shared conventions
+
+- **IDs:** `BIGINT UNSIGNED AUTO_INCREMENT` in MySQL → `Long` in Java/JavaScript.
+- **Naming:** DB uses `snake_case`; Java uses `camelCase`; MyBatis-Plus auto-converts. Frontend URL paths use `kebab-case`: `/teams/{team-id}/applications/{request-id}`.
+- **Timestamps:** `created_at` (set once), `updated_at` (auto-update via `ON UPDATE CURRENT_TIMESTAMP`).
+- **Enums:** Stored as MySQL `ENUM` or `VARCHAR`; mapped to Java enums in `com.teamcollab.common.enums` (10 enum classes).
+- **Route lazy-loading:** All page components loaded via `() => import(...)`.
+
+## Concurrency & Data Integrity
+
+- **防超募 (over-recruitment prevention):** `ApplicationServiceImpl.approve()` wraps a `SELECT ... FOR UPDATE` on the `teams` row in a transaction, checks `COUNT(members) < max_members` before inserting.
+- **Unique constraints:** `PK (user_id, skill_id)` on `user_skills`, `PK (team_id, user_id)` on `team_members`, `UNIQUE (user_id, team_id)` on `join_requests`, `UNIQUE` on `users.username` and `users.email`.
+- **Triggers (5 total):** Auto-add creator as team leader, auto-generate 3 default task lists on project creation, auto-send notifications on application review and task assignment change.

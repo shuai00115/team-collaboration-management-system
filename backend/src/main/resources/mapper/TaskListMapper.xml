@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.TaskListMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.TaskList">
+        <id column="list_id" property="listId"/>
+        <result column="project_id" property="projectId"/>
+        <result column="name" property="name"/>
+        <result column="position" property="position"/>
+        <result column="is_default" property="isDefault"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 查询指定项目下的所有任务列表（含任务数量统计），按 position 排序 -->
+    <select id="selectByProjectId" resultType="java.util.Map">
+        SELECT
+            tl.list_id,
+            tl.project_id,
+            tl.name,
+            tl.position,
+            tl.is_default,
+            tl.created_at,
+            COUNT(tk.task_id) AS task_count
+        FROM task_lists tl
+        LEFT JOIN tasks tk ON tl.list_id = tk.list_id
+        WHERE tl.project_id = #{projectId}
+        GROUP BY tl.list_id
+        ORDER BY tl.position ASC
+    </select>
+
+    <!-- 查询指定项目下任务列表的最大排序位置 -->
+    <select id="maxPosition" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(position), -1)
+        FROM task_lists
+        WHERE project_id = #{projectId}
+    </select>
+
+    <!-- 更新指定任务列表的排序位置 -->
+    <update id="updatePosition">
+        UPDATE task_lists
+        SET position = #{position}
+        WHERE list_id = #{listId}
+    </update>
+
+</mapper>

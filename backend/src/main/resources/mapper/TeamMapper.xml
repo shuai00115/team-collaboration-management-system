@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.TeamMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.Team">
+        <id column="team_id" property="teamId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="creator_id" property="creatorId"/>
+        <result column="max_members" property="maxMembers"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 分页查询正在招募的团队列表（支持多条件筛选） -->
+    <select id="selectRecruitingTeams" resultType="java.util.Map">
+        SELECT
+            t.team_id,
+            t.name,
+            t.description,
+            t.creator_id,
+            t.max_members,
+            t.status,
+            t.created_at,
+            t.updated_at,
+            u.username AS creator_name,
+            COUNT(tm.user_id) AS current_members,
+            GROUP_CONCAT(DISTINCT s.skill_name ORDER BY s.skill_name SEPARATOR ',') AS required_skills
+        FROM teams t
+        LEFT JOIN users u ON t.creator_id = u.user_id
+        LEFT JOIN team_members tm ON t.team_id = tm.team_id
+        LEFT JOIN team_required_skills trs ON t.team_id = trs.team_id
+        LEFT JOIN skills s ON trs.skill_id = s.skill_id
+        <where>
+            <if test="status != null and status != ''">
+                AND t.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND t.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="skillId != null">
+                AND EXISTS (
+                    SELECT 1 FROM team_required_skills trs2
+                    WHERE trs2.team_id = t.team_id AND trs2.skill_id = #{skillId}
+                )
+            </if>
+        </where>
+        GROUP BY t.team_id
+        <if test="minMembers != null">
+            HAVING COUNT(tm.user_id) &gt;= #{minMembers}
+        </if>
+        <if test="maxMembers != null">
+            <if test="minMembers != null">
+                AND COUNT(tm.user_id) &lt;= #{maxMembers}
+            </if>
+            <if test="minMembers == null">
+                HAVING COUNT(tm.user_id) &lt;= #{maxMembers}
+            </if>
+        </if>
+        ORDER BY t.created_at DESC
+    </select>
+
+    <!-- 查询团队详细信息（含创建者名称和当前成员数量） -->
+    <select id="selectTeamDetail" resultType="java.util.Map">
+        SELECT
+            t.*,
+            u.username AS creator_name,
+            COUNT(tm.user_id) AS current_members
+        FROM teams t
+        LEFT JOIN team_members tm ON t.team_id = tm.team_id
+        LEFT JOIN users u ON t.creator_id = u.user_id
+        WHERE t.team_id = #{teamId}
+        GROUP BY t.team_id
+    </select>
+
+    <!-- 查询团队成员列表（leader 排在首位，其余按加入时间排序） -->
+    <select id="selectTeamMembers" resultType="java.util.Map">
+        SELECT
+            u.user_id,
+            u.username,
+            u.avatar,
+            tm.role,
+            tm.joined_at
+        FROM team_members tm
+        INNER JOIN users u ON tm.user_id = u.user_id
+        WHERE tm.team_id = #{teamId}
+        ORDER BY
+            CASE tm.role WHEN 'leader' THEN 0 ELSE 1 END,
+            tm.joined_at
+    </select>
+
+    <!-- 行级锁查询团队（用于并发控制） -->
+    <select id="selectForUpdate" resultMap="BaseResultMap">
+        SELECT * FROM teams WHERE team_id = #{teamId} FOR UPDATE
+    </select>
+
+    <!-- 管理员分页查询团队列表（支持关键字搜索和状态筛选） -->
+    <select id="selectAdminTeamPage" resultType="java.util.Map">
+        SELECT
+            t.team_id,
+            t.name,
+            t.description,
+            t.creator_id,
+            t.max_members,
+            t.status,
+            t.created_at,
+            t.updated_at,
+            u.username AS creator_name,
+            COUNT(tm.user_id) AS current_members
+        FROM teams t
+        LEFT JOIN users u ON t.creator_id = u.user_id
+        LEFT JOIN team_members tm ON t.team_id = tm.team_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND t.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND t.status = #{status}
+            </if>
+        </where>
+        GROUP BY t.team_id
+        ORDER BY t.created_at DESC
+    </select>
+
+    <!-- 查询用户加入的所有团队 -->
+    <select id="selectUserTeams" resultType="java.util.Map">
+        SELECT
+            t.team_id,
+            t.name,
+            t.description,
+            t.creator_id,
+            t.max_members,
+            t.status,
+            t.created_at,
+            tm.role,
+            tm.joined_at,
+            (SELECT COUNT(*) FROM team_members tm2 WHERE tm2.team_id = t.team_id) AS current_members
+        FROM team_members tm
+        INNER JOIN teams t ON tm.team_id = t.team_id
+        WHERE tm.user_id = #{userId}
+        ORDER BY tm.joined_at DESC
+    </select>
+
+    <!-- 统计团队成员数量 -->
+    <select id="countMembers" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM team_members WHERE team_id = #{teamId}
+    </select>
+
+</mapper>

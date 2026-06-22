@@ -1,1 +1,6 @@
 .claude/*
+backend/target/
+frontend/dist/
+node_modules/
+*.log
+.idea/

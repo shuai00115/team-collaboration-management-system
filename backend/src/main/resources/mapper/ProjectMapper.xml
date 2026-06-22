@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.ProjectMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.Project">
+        <id column="project_id" property="projectId"/>
+        <result column="team_id" property="teamId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 分页查询指定团队的项目列表（含任务统计信息） -->
+    <select id="selectByTeamId" resultType="java.util.Map">
+        SELECT
+            p.project_id,
+            p.team_id,
+            p.name,
+            p.description,
+            p.created_at,
+            p.updated_at,
+            COALESCE(task_stats.total_tasks, 0) AS total_tasks,
+            COALESCE(task_stats.completed_tasks, 0) AS completed_tasks
+        FROM projects p
+        LEFT JOIN (
+            SELECT
+                tl.project_id,
+                COUNT(tk.task_id) AS total_tasks,
+                SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS completed_tasks
+            FROM task_lists tl
+            LEFT JOIN tasks tk ON tl.list_id = tk.list_id
+            GROUP BY tl.project_id
+        ) task_stats ON p.project_id = task_stats.project_id
+        WHERE p.team_id = #{teamId}
+        ORDER BY p.created_at DESC
+    </select>
+
+    <!-- 查询项目详细信息（含团队名称和任务统计） -->
+    <select id="selectProjectDetail" resultType="java.util.Map">
+        SELECT
+            p.project_id,
+            p.team_id,
+            t.name AS team_name,
+            p.name,
+            p.description,
+            p.created_at,
+            p.updated_at,
+            COALESCE(task_stats.total_tasks, 0) AS total_tasks,
+            COALESCE(task_stats.completed_tasks, 0) AS completed_tasks,
+            COALESCE(task_stats.in_progress_tasks, 0) AS in_progress_tasks,
+            COALESCE(task_stats.todo_tasks, 0) AS todo_tasks
+        FROM projects p
+        INNER JOIN teams t ON p.team_id = t.team_id
+        LEFT JOIN (
+            SELECT
+                tl.project_id,
+                COUNT(tk.task_id) AS total_tasks,
+                SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS completed_tasks,
+                SUM(CASE WHEN tl.name = '进行中' THEN 1 ELSE 0 END) AS in_progress_tasks,
+                SUM(CASE WHEN tl.name = '待办' THEN 1 ELSE 0 END) AS todo_tasks
+            FROM task_lists tl
+            LEFT JOIN tasks tk ON tl.list_id = tk.list_id
+            GROUP BY tl.project_id
+        ) task_stats ON p.project_id = task_stats.project_id
+        WHERE p.project_id = #{projectId}
+    </select>
+
+    <!-- 查询项目的所有阶段（含任务完成率统计） -->
+    <select id="selectStagesByProjectId" resultType="java.util.Map">
+        SELECT
+            s.stage_id,
+            s.project_id,
+            s.name,
+            s.description,
+            s.order_index,
+            s.start_date,
+            s.end_date,
+            s.status,
+            COUNT(tk.task_id) AS stage_tasks,
+            SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS stage_completed
+        FROM stages s
+        LEFT JOIN tasks tk ON s.stage_id = tk.stage_id
+        LEFT JOIN task_lists tl ON tk.list_id = tl.list_id
+        WHERE s.project_id = #{projectId}
+        GROUP BY s.stage_id
+        ORDER BY s.order_index ASC
+    </select>
+
+</mapper>

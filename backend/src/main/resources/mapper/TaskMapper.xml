@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.teamcollab.mapper.TaskMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.teamcollab.entity.Task">
+        <id column="task_id" property="taskId"/>
+        <result column="list_id" property="listId"/>
+        <result column="stage_id" property="stageId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="priority" property="priority"/>
+        <result column="position" property="position"/>
+        <result column="assignee_id" property="assigneeId"/>
+        <result column="creator_id" property="creatorId"/>
+        <result column="due_date" property="dueDate"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 分页查询指定任务列表下的任务（支持多条件筛选和排序） -->
+    <select id="selectByListId" resultType="java.util.Map">
+        SELECT
+            t.task_id,
+            t.list_id,
+            t.stage_id,
+            t.title,
+            t.description,
+            t.priority,
+            t.position,
+            t.assignee_id,
+            t.creator_id,
+            t.due_date,
+            t.created_at,
+            t.updated_at,
+            tl.name AS list_name,
+            s.name AS stage_name,
+            assignee.username AS assignee_name,
+            assignee.avatar AS assignee_avatar,
+            creator.username AS creator_name,
+            creator.avatar AS creator_avatar
+        FROM tasks t
+        INNER JOIN task_lists tl ON t.list_id = tl.list_id
+        LEFT JOIN stages s ON t.stage_id = s.stage_id
+        LEFT JOIN users assignee ON t.assignee_id = assignee.user_id
+        LEFT JOIN users creator ON t.creator_id = creator.user_id
+        <where>
+            <if test="listId != null">
+                AND tl.list_id = #{listId}
+            </if>
+            <if test="priority != null and priority != ''">
+                AND t.priority = #{priority}
+            </if>
+            <if test="stageId != null">
+                AND t.stage_id = #{stageId}
+            </if>
+            <if test="assigneeId != null">
+                AND t.assignee_id = #{assigneeId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND t.title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        <choose>
+            <when test="sortBy == 'priority'">
+                ORDER BY FIELD(t.priority, 'high', 'medium', 'low') ASC, t.position ASC
+            </when>
+            <when test="sortBy == 'due_date'">
+                ORDER BY t.due_date ASC, t.position ASC
+            </when>
+            <when test="sortBy == 'created_at'">
+                ORDER BY t.created_at DESC, t.position ASC
+            </when>
+            <otherwise>
+                ORDER BY t.position ASC
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 查询任务详细信息（含关联的项目、团队、阶段、负责人、创建者等完整信息） -->
+    <select id="selectTaskDetail" resultType="java.util.Map">
+        SELECT
+            t.task_id,
+            t.list_id,
+            t.stage_id,
+            t.title,
+            t.description,
+            t.priority,
+            t.position,
+            t.assignee_id,
+            t.creator_id,
+            t.due_date,
+            t.created_at,
+            t.updated_at,
+            tl.name AS list_name,
+            tl.project_id,
+            p.name AS project_name,
+            p.team_id,
+            tm.name AS team_name,
+            s.name AS stage_name,
+            assignee.username AS assignee_name,
+            assignee.avatar AS assignee_avatar,
+            creator.username AS creator_name,
+            creator.avatar AS creator_avatar
+        FROM tasks t
+        INNER JOIN task_lists tl ON t.list_id = tl.list_id
+        INNER JOIN projects p ON tl.project_id = p.project_id
+        INNER JOIN teams tm ON p.team_id = tm.team_id
+        LEFT JOIN stages s ON t.stage_id = s.stage_id
+        LEFT JOIN users assignee ON t.assignee_id = assignee.user_id
+        LEFT JOIN users creator ON t.creator_id = creator.user_id
+        WHERE t.task_id = #{taskId}
+    </select>
+
+    <!-- 分页查询用户相关的任务（作为负责人或创建者，支持多条件筛选） -->
+    <select id="selectUserTasks" resultType="java.util.Map">
+        SELECT
+            t.task_id,
+            t.list_id,
+            t.stage_id,
+            t.title,
+            t.description,
+            t.priority,
+            t.position,
+            t.assignee_id,
+            t.creator_id,
+            t.due_date,
+            t.created_at,
+            t.updated_at,
+            tl.name AS list_name,
+            tl.project_id,
+            p.name AS project_name,
+            p.team_id,
+            tm.name AS team_name,
+            s.name AS stage_name
+        FROM tasks t
+        INNER JOIN task_lists tl ON t.list_id = tl.list_id
+        INNER JOIN projects p ON tl.project_id = p.project_id
+        INNER JOIN teams tm ON p.team_id = tm.team_id
+        LEFT JOIN stages s ON t.stage_id = s.stage_id
+        <where>
+            AND (t.assignee_id = #{userId} OR t.creator_id = #{userId})
+            <if test="priority != null and priority != ''">
+                AND t.priority = #{priority}
+            </if>
+            <if test="listId != null">
+                AND t.list_id = #{listId}
+            </if>
+            <if test="teamId != null">
+                AND p.team_id = #{teamId}
+            </if>
+        </where>
+        ORDER BY
+            CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END,
+            t.due_date ASC,
+            t.created_at DESC
+    </select>
+
+    <!-- 查询指定任务列表下任务的最大排序位置 -->
+    <select id="maxPosition" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(position), -1)
+        FROM tasks
+        WHERE list_id = #{listId}
+    </select>
+
+    <!-- 更新任务的排序位置和所属列表（用于拖拽移动任务） -->
+    <update id="updatePosition">
+        UPDATE tasks
+        SET position = #{position},
+            list_id = #{listId}
+        WHERE task_id = #{taskId}
+    </update>
+
+    <!-- 查询项目的任务统计信息（总数和已完成数） -->
+    <select id="selectTaskStats" resultType="java.util.Map">
+        SELECT
+            COUNT(t.task_id) AS total_tasks,
+            SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS completed_tasks
+        FROM tasks t
+        INNER JOIN task_lists tl ON t.list_id = tl.list_id
+        WHERE tl.project_id = #{projectId}
+    </select>
+
+    <!-- 查询团队维度的任务统计信息（含团队名称、各优先级分布） -->
+    <select id="selectTeamTaskStats" resultType="java.util.Map">
+        SELECT
+            tm.name AS team_name,
+            COUNT(t.task_id) AS total_tasks,
+            SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS completed_tasks,
+            SUM(CASE WHEN tl.name = '进行中' THEN 1 ELSE 0 END) AS in_progress_tasks,
+            SUM(CASE WHEN tl.name = '待办' THEN 1 ELSE 0 END) AS todo_tasks,
+            SUM(CASE WHEN t.priority = 'high' THEN 1 ELSE 0 END) AS high_total,
+            SUM(CASE WHEN t.priority = 'high' AND tl.name = '已完成' THEN 1 ELSE 0 END) AS high_completed,
+            SUM(CASE WHEN t.priority = 'medium' THEN 1 ELSE 0 END) AS medium_total,
+            SUM(CASE WHEN t.priority = 'medium' AND tl.name = '已完成' THEN 1 ELSE 0 END) AS medium_completed,
+            SUM(CASE WHEN t.priority = 'low' THEN 1 ELSE 0 END) AS low_total,
+            SUM(CASE WHEN t.priority = 'low' AND tl.name = '已完成' THEN 1 ELSE 0 END) AS low_completed
+        FROM tasks t
+        INNER JOIN task_lists tl ON t.list_id = tl.list_id
+        INNER JOIN projects p ON tl.project_id = p.project_id
+        INNER JOIN teams tm ON p.team_id = tm.team_id
+        <where>
+            <if test="teamId != null">
+                AND tm.team_id = #{teamId}
+            </if>
+            <if test="projectId != null">
+                AND p.project_id = #{projectId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询团队各成员的任务统计 -->
+    <select id="selectMemberStats" resultType="java.util.Map">
+        SELECT
+            u.user_id,
+            u.username,
+            u.avatar,
+            COUNT(t.task_id) AS assigned_tasks,
+            SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS completed_tasks,
+            SUM(CASE WHEN t.due_date IS NOT NULL AND t.due_date &lt; NOW() AND tl.name != '已完成' THEN 1 ELSE 0 END) AS overdue_tasks
+        FROM tasks t
+        INNER JOIN task_lists tl ON t.list_id = tl.list_id
+        INNER JOIN projects p ON tl.project_id = p.project_id
+        INNER JOIN team_members tm ON p.team_id = tm.team_id AND t.assignee_id = tm.user_id
+        INNER JOIN users u ON t.assignee_id = u.user_id
+        <where>
+            <if test="teamId != null">
+                AND tm.team_id = #{teamId}
+            </if>
+            <if test="projectId != null">
+                AND p.project_id = #{projectId}
+            </if>
+        </where>
+        GROUP BY u.user_id, u.username, u.avatar
+        ORDER BY assigned_tasks DESC
+    </select>
+
+    <!-- 查询单个成员的详细任务统计 -->
+    <select id="selectMemberDetailStats" resultType="java.util.Map">
+        SELECT
+            u.user_id,
+            u.username,
+            COUNT(t.task_id) AS assigned_tasks,
+            SUM(CASE WHEN tl.name = '已完成' THEN 1 ELSE 0 END) AS completed_tasks,
+            SUM(CASE WHEN tl.name = '进行中' THEN 1 ELSE 0 END) AS in_progress_tasks,
+            SUM(CASE WHEN tl.name = '待办' THEN 1 ELSE 0 END) AS todo_tasks,
+            SUM(CASE WHEN t.due_date IS NOT NULL AND t.due_date &lt; NOW() AND tl.name != '已完成' THEN 1 ELSE 0 END) AS overdue_tasks,
+            SUM(CASE WHEN t.priority = 'high' THEN 1 ELSE 0 END) AS high_assigned,
+            SUM(CASE WHEN t.priority = 'high' AND tl.name = '已完成' THEN 1 ELSE 0 END) AS high_completed,
+            SUM(CASE WHEN t.priority = 'medium' THEN 1 ELSE 0 END) AS medium_assigned,
+            SUM(CASE WHEN t.priority = 'medium' AND tl.name = '已完成' THEN 1 ELSE 0 END) AS medium_completed,
+            SUM(CASE WHEN t.priority = 'low' THEN 1 ELSE 0 END) AS low_assigned,
+            SUM(CASE WHEN t.priority = 'low' AND tl.name = '已完成' THEN 1 ELSE 0 END) AS low_completed
+        FROM tasks t
+        INNER JOIN task_lists tl ON t.list_id = tl.list_id
+        INNER JOIN projects p ON tl.project_id = p.project_id
+        INNER JOIN team_members tm ON p.team_id = tm.team_id AND t.assignee_id = tm.user_id
+        INNER JOIN users u ON t.assignee_id = u.user_id
+        WHERE tm.team_id = #{teamId}
+          AND u.user_id = #{userId}
+        GROUP BY u.user_id, u.username
+    </select>
+
+</mapper>
