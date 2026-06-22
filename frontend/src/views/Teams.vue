@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { getTeams, createTeam } from '@/api/team'
 import request from '@/api/index'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 const getSkillsList = (params) => request.get('/skills', { params })
 
 const router = useRouter()
@@ -95,7 +95,10 @@ async function handleCreate() {
 <template>
   <div class="teams-page">
     <div class="page-header">
-      <h3>团队招募墙</h3>
+      <div>
+        <h3 class="page-title">团队招募墙</h3>
+        <p class="page-subtitle">发现优秀团队，加入协作项目</p>
+      </div>
       <div style="display:flex;gap:10px">
         <el-button type="primary" :icon="Plus" @click="openCreate" v-if="hasToken">创建团队</el-button>
         <el-button @click="router.push('/dashboard')" v-if="hasToken">返回工作台</el-button>
@@ -103,10 +106,10 @@ async function handleCreate() {
     </div>
 
     <!-- 筛选栏 -->
-    <el-card style="margin-bottom:16px">
+    <el-card class="filter-card" shadow="never">
       <el-row :gutter="12" align="middle">
         <el-col :span="8">
-          <el-input v-model="filters.keyword" placeholder="搜索团队名称" clearable @clear="handleSearch" @keyup.enter="handleSearch" />
+          <el-input v-model="filters.keyword" placeholder="搜索团队名称" clearable :prefix-icon="Search" @clear="handleSearch" @keyup.enter="handleSearch" />
         </el-col>
         <el-col :span="8">
           <el-select v-model="filters.skillId" placeholder="按技能筛选" clearable @change="handleSearch" style="width:100%">
@@ -114,36 +117,43 @@ async function handleCreate() {
           </el-select>
         </el-col>
         <el-col :span="8">
-          <el-button type="primary" @click="handleSearch">筛选</el-button>
-          <el-button @click="resetFilters(); fetchTeams()">重置</el-button>
+          <el-button type="primary" :icon="Search" @click="handleSearch">筛选</el-button>
+          <el-button :icon="RefreshRight" @click="resetFilters(); fetchTeams()">重置</el-button>
         </el-col>
       </el-row>
     </el-card>
 
     <!-- 团队卡片 -->
-    <el-row :gutter="16" v-loading="loading">
-      <el-col :span="8" v-for="team in teams" :key="team.teamId" style="margin-bottom:16px">
+    <el-row :gutter="20" v-loading="loading">
+      <el-col :span="8" v-for="team in teams" :key="team.teamId" style="margin-bottom:20px">
         <el-card shadow="hover" class="team-card" @click="goDetail(team.teamId)">
           <div class="card-top">
             <span class="team-name">{{ team.name }}</span>
-            <el-tag type="success" size="small">招募中</el-tag>
+            <el-tag type="success" size="small" effect="dark" round>招募中</el-tag>
           </div>
           <p class="team-desc">{{ team.description || '暂无简介' }}</p>
           <div class="card-tags">
             <el-tag
               v-for="sk in (team.requiredSkills || [])" :key="sk.skillId"
-              size="small" type="info" effect="plain"
-              style="margin-right:4px;margin-bottom:4px"
+              size="small" effect="plain" class="skill-tag"
             >{{ sk.skillName }}</el-tag>
           </div>
           <div class="card-footer">
-            <span>{{ team.currentMembers }} / {{ team.maxMembers }} 人</span>
-            <span>队长：{{ team.creatorName }}</span>
+            <div class="footer-item">
+              <span class="footer-icon">👥</span>
+              <span>{{ team.currentMembers }} / {{ team.maxMembers }} 人</span>
+            </div>
+            <div class="footer-item">
+              <span class="footer-icon">👑</span>
+              <span>{{ team.creatorName }}</span>
+            </div>
           </div>
         </el-card>
       </el-col>
     </el-row>
-    <el-empty v-if="!loading && !teams.length" description="暂无招募中的团队" />
+    <el-empty v-if="!loading && !teams.length" description="暂无招募中的团队">
+      <el-button type="primary" @click="openCreate" v-if="hasToken">创建第一个团队</el-button>
+    </el-empty>
 
     <el-pagination
       v-if="total > filters.pageSize"
@@ -152,7 +162,7 @@ async function handleCreate() {
       :total="total"
       layout="prev, pager, next"
       @current-change="fetchTeams"
-      style="text-align:center;margin-top:16px"
+      style="text-align:center;margin-top:24px"
     />
 
     <!-- 创建团队弹窗 -->
@@ -187,11 +197,74 @@ async function handleCreate() {
 
 <style scoped>
 .teams-page { max-width: 1100px; margin: 0 auto; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.team-card { cursor: pointer; }
-.card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.team-name { font-weight: 600; font-size: 16px; }
-.team-desc { color: #666; font-size: 13px; margin-bottom: 10px; min-height: 20px; max-height: 40px; overflow: hidden; }
-.card-tags { min-height: 24px; margin-bottom: 8px; }
-.card-footer { display: flex; justify-content: space-between; color: #999; font-size: 12px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.page-title { margin: 0 0 4px 0; font-size: 24px; font-weight: 700; color: #303133; }
+.page-subtitle { margin: 0; color: #909399; font-size: 14px; }
+
+/* 筛选栏 */
+.filter-card {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: #fafbfc;
+  border: 1px solid #ebeef5;
+}
+
+/* 团队卡片 */
+.team-card {
+  cursor: pointer;
+  border-radius: 12px;
+  border: 1px solid #ebeef5;
+  transition: transform 0.25s, box-shadow 0.25s;
+  height: 100%;
+}
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.1) !important;
+  border-color: #409eff;
+}
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.team-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: #303133;
+}
+.team-desc {
+  color: #909399;
+  font-size: 13px;
+  margin-bottom: 12px;
+  min-height: 20px;
+  max-height: 40px;
+  overflow: hidden;
+  line-height: 1.5;
+}
+.card-tags {
+  min-height: 28px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.skill-tag {
+  border-radius: 6px;
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+.footer-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #909399;
+  font-size: 12px;
+}
+.footer-icon { font-size: 13px; }
 </style>

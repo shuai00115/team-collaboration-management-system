@@ -51,6 +51,7 @@ async function handleRead(notif) {
   // 跳转到关联实体
   const { relatedType, relatedId, projectId } = notif
   if (relatedType === 'team') router.push(`/teams/${relatedId}`)
+  else if (relatedType === 'join_request') router.push(`/teams/${relatedId}`)
   else if ((relatedType === 'task' || relatedType === 'stage') && projectId) router.push(`/projects/${projectId}`)
   else if (relatedType === 'project' || relatedType === 'task' || relatedType === 'stage') router.push(`/projects/${relatedId}`)
 }
@@ -119,18 +120,40 @@ const typeLabels = {
 
 <style scoped>
 .notifications-page { max-width: 800px; margin: 0 auto; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.notif-item {
-  display: flex; align-items: flex-start; gap: 12px; padding: 14px 0;
-  border-bottom: 1px solid #f0f0f0; cursor: pointer;
+.page-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
 }
-.notif-item.unread { background: #f0f7ff; margin: 0 -20px; padding: 14px 20px; }
+.page-header h3 { margin: 0; font-size: 22px; font-weight: 700; color: #303133; }
+
+.notifications-page :deep(.el-card) {
+  border-radius: 10px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.notif-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  margin-bottom: 4px;
+}
+.notif-item:hover { background: #f5f7fa; transform: translateX(2px); }
+.notif-item.unread {
+  background: linear-gradient(135deg, #ecf5ff, #f0f7ff);
+  border-left: 3px solid #409eff;
+  padding: 14px 16px 14px 13px;
+}
 .notif-dot {
-  width: 8px; height: 8px; border-radius: 50%; background: #f56c6c;
-  flex-shrink: 0; margin-top: 6px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #f56c6c; flex-shrink: 0; margin-top: 8px;
+  box-shadow: 0 0 0 3px rgba(245,108,108,0.2);
 }
 .notif-content { flex: 1; }
-.notif-header { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
-.notif-body { color: #666; font-size: 13px; margin-bottom: 4px; }
-.notif-time { color: #999; font-size: 12px; }
+.notif-header { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.notif-header strong { color: #303133; font-size: 14px; }
+.notif-body { color: #606266; font-size: 13px; margin-bottom: 6px; line-height: 1.5; }
+.notif-time { color: #c0c4cc; font-size: 12px; }
 </style>

@@ -167,5 +167,27 @@ onMounted(() => { fetchUsers(); fetchTeams(); fetchSkills() })
 
 <style scoped>
 .admin-page { max-width: 1100px; margin: 0 auto; }
-h3 { margin-bottom: 16px; }
+.admin-page h3 { margin-bottom: 20px; font-size: 22px; font-weight: 700; color: #303133; }
+
+.admin-page :deep(.el-card) {
+  border-radius: 10px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.admin-page :deep(.el-tabs__header) {
+  margin-bottom: 16px;
+}
+.admin-page :deep(.el-tabs__item) {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* 技能标签 */
+:deep(.el-tag) {
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+:deep(.el-tag:hover) {
+  transform: translateY(-1px);
+}
 </style>

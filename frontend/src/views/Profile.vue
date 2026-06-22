@@ -209,6 +209,23 @@ async function handleChangePwd() {
 
 <style scoped>
 .profile-page { max-width: 1000px; margin: 0 auto; }
-h3 { margin-bottom: 16px; }
-.section-card { margin-bottom: 16px; }
+.profile-page h3 {
+  margin-bottom: 20px; font-size: 22px; font-weight: 700;
+  color: #303133;
+}
+.section-card {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+/* 技能标签颜色 */
+:deep(.el-tag) {
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+:deep(.el-tag:hover) {
+  transform: translateY(-1px);
+}
 </style>

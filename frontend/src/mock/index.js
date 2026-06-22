@@ -217,6 +217,9 @@ export async function getMockResponse(config) {
     return { code: 200, msg: '阶段信息更新成功', data: null }
   }
   if (stageActionMatch && method === 'DELETE') {
+    const sid = Number(stageActionMatch[1])
+    const idx = mockData.stages.findIndex(x => x.stageId === sid)
+    if (idx > -1) mockData.stages.splice(idx, 1)
     return { code: 200, msg: '阶段已删除', data: null }
   }
 

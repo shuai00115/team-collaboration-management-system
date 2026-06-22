@@ -103,9 +103,10 @@ const menuItems = [
 <style scoped>
 .app-layout { height: 100vh; }
 .app-aside {
-  background: #304156;
+  background: linear-gradient(180deg, #1e2a3a 0%, #304156 100%);
   overflow: hidden;
   transition: width 0.3s;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.08);
 }
 .logo {
   height: 60px;
@@ -114,9 +115,12 @@ const menuItems = [
   justify-content: center;
   color: #fff;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   user-select: none;
+  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  letter-spacing: 1px;
 }
 .logo-short { font-size: 22px; letter-spacing: 2px; }
 .app-header {
@@ -124,27 +128,36 @@ const menuItems = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid #ebeef5;
   padding: 0 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .header-left { display: flex; align-items: center; }
-.collapse-btn { cursor: pointer; color: #666; }
+.collapse-btn {
+  cursor: pointer;
+  color: #909399;
+  transition: color 0.3s;
+}
+.collapse-btn:hover { color: #409eff; }
 .header-right { display: flex; align-items: center; gap: 16px; }
 .user-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #409eff;
+  background: linear-gradient(135deg, #409eff, #66b1ff);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+.user-avatar:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(64,158,255,0.4); }
 .bell-badge { margin-right: 4px; }
 .app-main {
-  background: #f5f7fa;
+  background: #f0f2f5;
   padding: 20px;
   overflow-y: auto;
   height: calc(100vh - 60px);

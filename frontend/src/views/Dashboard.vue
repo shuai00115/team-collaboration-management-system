@@ -41,21 +41,32 @@ const cards = computed(() => {
     { label: '待审核申请', value: pendingApps.length, icon: DataBoard, color: '#f56c6c' }
   ]
 })
+
+function goToTeam(teamId) {
+  router.push(`/teams/${teamId}`)
+}
 </script>
 
 <template>
   <div class="dashboard" v-loading="loading">
-    <h3 class="page-title">我的工作台</h3>
+    <div class="page-header">
+      <div>
+        <h3 class="page-title">我的工作台</h3>
+        <p class="page-subtitle">欢迎回来，{{ userStore.userInfo?.username || '用户' }}</p>
+      </div>
+    </div>
 
     <!-- 统计卡片 -->
-    <el-row :gutter="16" style="margin-bottom:16px">
+    <el-row :gutter="20" style="margin-bottom:20px">
       <el-col :span="6" v-for="c in cards" :key="c.label">
-        <el-card shadow="hover">
-          <div style="display:flex;align-items:center;gap:12px">
-            <el-icon :size="32" :color="c.color"><component :is="c.icon" /></el-icon>
-            <div>
-              <div style="font-size:24px;font-weight:700">{{ c.value }}</div>
-              <div style="color:#999;font-size:13px">{{ c.label }}</div>
+        <el-card shadow="hover" class="stat-card" :style="{ borderTop: `3px solid ${c.color}` }">
+          <div class="stat-card-inner">
+            <div class="stat-icon" :style="{ background: c.color }">
+              <el-icon :size="24" color="#fff"><component :is="c.icon" /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ c.value }}</div>
+              <div class="stat-label">{{ c.label }}</div>
             </div>
           </div>
         </el-card>
@@ -64,18 +75,26 @@ const cards = computed(() => {
 
     <!-- 我的团队 -->
     <el-card class="section-card">
-      <template #header><span>我的团队（{{ myTeams.length }}）</span></template>
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">我的团队</span>
+          <el-tag size="small" round>{{ myTeams.length }} 个</el-tag>
+        </div>
+      </template>
       <el-row :gutter="16" v-if="myTeams.length">
         <el-col :span="8" v-for="team in myTeams" :key="team.teamId" style="margin-bottom:12px">
-          <el-card shadow="hover" class="team-card" @click="router.push(`/teams/${team.teamId}`)">
-            <p class="team-name">{{ team.teamName }}</p>
-            <el-tag :type="team.myRole === 'leader' ? 'danger' : 'primary'" size="small">
-              {{ team.myRole === 'leader' ? '队长' : '成员' }}
-            </el-tag>
-            <span style="margin-left:8px;color:#999;font-size:13px">
-              {{ team.currentMembers }}/{{ team.maxMembers }} 人
-            </span>
-            <el-tag v-if="team.status==='recruiting'" type="success" size="small" effect="plain" style="margin-left:6px">招募中</el-tag>
+          <el-card shadow="hover" class="team-card" @click="goToTeam(team.teamId)">
+            <div class="team-card-top">
+              <p class="team-name">{{ team.teamName }}</p>
+              <el-tag v-if="team.status==='recruiting'" type="success" size="small" effect="dark" round>招募中</el-tag>
+            </div>
+            <p class="team-desc">{{ team.description }}</p>
+            <div class="team-card-bottom">
+              <el-tag :type="team.myRole === 'leader' ? 'danger' : 'primary'" size="small" effect="plain" round>
+                {{ team.myRole === 'leader' ? '👑 队长' : '👤 成员' }}
+              </el-tag>
+              <span class="team-member-count">{{ team.currentMembers }}/{{ team.maxMembers }} 人</span>
+            </div>
           </el-card>
         </el-col>
       </el-row>
@@ -84,8 +103,13 @@ const cards = computed(() => {
 
     <!-- 我的任务 -->
     <el-card class="section-card">
-      <template #header><span>我的任务</span></template>
-      <el-table :data="myTasks" stripe size="small" v-if="myTasks.length">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">我的任务</span>
+          <el-tag size="small" round>{{ myTasks.length }} 项</el-tag>
+        </div>
+      </template>
+      <el-table :data="myTasks" stripe size="small" v-if="myTasks.length" :header-cell-style="{ background: '#fafafa', color: '#606266', fontWeight: 600 }">
         <el-table-column prop="title" label="任务" min-width="200" show-overflow-tooltip />
         <el-table-column label="优先级" width="80">
           <template #default="{ row }">
@@ -103,12 +127,17 @@ const cards = computed(() => {
 
     <!-- 申请记录 -->
     <el-card class="section-card">
-      <template #header><span>最近的入队申请</span></template>
-      <el-table :data="myApps" stripe size="small" v-if="myApps.length">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">最近的入队申请</span>
+          <el-tag size="small" round>{{ myApps.length }} 条</el-tag>
+        </div>
+      </template>
+      <el-table :data="myApps" stripe size="small" v-if="myApps.length" :header-cell-style="{ background: '#fafafa', color: '#606266', fontWeight: 600 }">
         <el-table-column prop="teamName" label="团队" />
         <el-table-column label="状态" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.status==='approved'?'success':row.status==='rejected'?'danger':'warning'" size="small">
+            <el-tag :type="row.status==='approved'?'success':row.status==='rejected'?'danger':'warning'" size="small" effect="dark">
               {{ { pending:'待审核', approved:'已通过', rejected:'已拒绝' }[row.status] }}
             </el-tag>
           </template>
@@ -122,8 +151,42 @@ const cards = computed(() => {
 
 <style scoped>
 .dashboard { max-width: 1000px; margin: 0 auto; }
-.page-title { margin-bottom: 20px; font-size: 20px; }
-.section-card { margin-bottom: 16px; }
-.team-card { cursor: pointer; }
-.team-name { font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-title { margin: 0 0 4px 0; font-size: 24px; font-weight: 700; color: #303133; }
+.page-subtitle { margin: 0; color: #909399; font-size: 14px; }
+
+/* 统计卡片 */
+.stat-card { border-radius: 10px; transition: transform 0.2s, box-shadow 0.2s; }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important; }
+.stat-card-inner { display: flex; align-items: center; gap: 16px; }
+.stat-icon {
+  width: 52px; height: 52px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.stat-value { font-size: 28px; font-weight: 700; line-height: 1.2; color: #303133; }
+.stat-label { color: #909399; font-size: 13px; margin-top: 2px; }
+
+/* 区块卡片 */
+.section-card {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  transition: box-shadow 0.3s;
+}
+.section-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.card-header { display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 16px; font-weight: 600; color: #303133; }
+
+.team-card {
+  cursor: pointer; border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.team-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important; }
+.team-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.team-name { font-weight: 700; font-size: 15px; margin: 0; color: #303133; }
+.team-desc { color: #909399; font-size: 12px; margin: 0 0 10px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-card-bottom { display: flex; align-items: center; gap: 8px; }
+.team-member-count { color: #909399; font-size: 12px; }
 </style>

@@ -296,20 +296,54 @@ const showLoginHint = computed(() => !isLoggedIn.value && members.value.length =
 
 <style scoped>
 .team-detail { max-width: 1100px; margin: 0 auto; }
-.section-card { margin-bottom: 16px; }
-.team-header { display: flex; justify-content: space-between; align-items: center; }
+.section-card {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.team-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #303133;
+}
+
 .member-item {
-  display: flex; align-items: center; gap: 10px; padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  margin-bottom: 4px;
 }
+.member-item:hover { background: #f5f7fa; }
 .member-avatar {
-  width: 32px; height: 32px; border-radius: 50%; background: #409eff;
-  color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #409eff, #66b1ff);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.25);
+  flex-shrink: 0;
 }
-.member-name { flex: 1; font-weight: 500; }
+.member-name { flex: 1; font-weight: 500; color: #303133; }
+
 .project-item {
-  display: flex; align-items: center; gap: 10px; padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: 8px;
+  transition: background 0.2s;
+  margin-bottom: 4px;
 }
-.project-name { font-weight: 500; color: #409eff; cursor: pointer; flex: 1; }
+.project-item:hover { background: #f5f7fa; }
+.project-name {
+  font-weight: 600; color: #409eff; cursor: pointer;
+  transition: color 0.2s;
+}
+.project-name:hover { color: #337ecc; }
 </style>

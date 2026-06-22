@@ -210,7 +210,8 @@ const notifications = [
   { notificationId: 3, userId: 1, type: 'due_reminder', title: '任务即将到期', content: '任务 "设计数据库 ER 图" 将于明天截止。', relatedType: 'task', relatedId: 4, projectId: 1, isRead: 0, createdAt: ago(1) },
   { notificationId: 4, userId: 1, type: 'stage_overdue', title: '阶段超期提醒', content: '阶段 "系统设计" 已超过截止日期，请尽快处理。', relatedType: 'project', relatedId: 1, projectId: 1, isRead: 1, createdAt: ago(3) },
   { notificationId: 5, userId: 1, type: 'join_approved', title: '入队申请已通过', content: '您加入团队 "前端开发小组" 的申请已通过！', relatedType: 'team', relatedId: 2, projectId: null, isRead: 1, createdAt: ago(20) },
-  { notificationId: 6, userId: 1, type: 'new_join_request', title: '收到新的入队申请', content: '用户 wangwu 申请加入团队 "数据分析小分队"', relatedType: 'join_request', relatedId: 1, projectId: null, isRead: 1, createdAt: ago(7) },
+  { notificationId: 6, userId: 1, type: 'new_join_request', title: '收到新的入队申请', content: '用户 zhaoliu 申请加入团队 "后端开发小组"', relatedType: 'join_request', relatedId: 1, projectId: null, isRead: 1, createdAt: ago(7) },
+  { notificationId: 9, userId: 1, type: 'new_join_request', title: '收到新的入队申请', content: '用户 sunqi 申请加入团队 "后端开发小组"', relatedType: 'join_request', relatedId: 1, projectId: null, isRead: 0, createdAt: ago(0, 4) },
   { notificationId: 7, userId: 1, type: 'task_assigned', title: '您被分配了新的任务', content: '任务 "编写 DDL 建表脚本" 已分配给您。', relatedType: 'task', relatedId: 16, projectId: 1, isRead: 1, createdAt: ago(20) },
   { notificationId: 8, userId: 1, type: 'task_updated', title: '任务信息已更新', content: '任务 "修复登录页样式问题" 优先级已从 中 改为 低。', relatedType: 'task', relatedId: 8, projectId: 1, isRead: 0, createdAt: ago(0, 1) },
 ]
@@ -226,6 +227,9 @@ const myTeams = [
 const myApplications = [
   { requestId: 5, teamId: 1, teamName: '后端开发小组', message: '熟练掌握 Java 和 Spring Boot', status: 'approved', createdAt: '2026-03-09 14:30:00', reviewedAt: '2026-03-10 14:00:00' },
   { requestId: 6, teamId: 2, teamName: '前端开发小组', message: '有 Vue3 + TS 项目经验', status: 'approved', createdAt: '2026-03-19 10:00:00', reviewedAt: '2026-03-20 10:00:00' },
+  { requestId: 7, teamId: 4, teamName: '移动端 Flutter 组', message: '我有 Flutter 跨平台开发经验，希望加入一起做移动端项目', status: 'pending', createdAt: ago(0, 3), reviewedAt: null },
+  { requestId: 8, teamId: 1, teamName: '后端开发小组', message: '擅长微服务和分布式系统设计', status: 'pending', createdAt: ago(0, 8), reviewedAt: null },
+  { requestId: 9, teamId: 3, teamName: '数据分析小分队', message: '熟练使用 Pandas 和 Matplotlib', status: 'rejected', createdAt: ago(5), reviewedAt: ago(4) },
 ]
 
 // ---- 统计 ----

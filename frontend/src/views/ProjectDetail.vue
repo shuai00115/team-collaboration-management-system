@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProjectDetail, getStages, createStage, updateStageStatus, getStageTemplates, createStagesFromTemplate } from '@/api/project'
+import { getProjectDetail, getStages, createStage, updateStageStatus, deleteStage, getStageTemplates, createStagesFromTemplate } from '@/api/project'
 import {
   getProjectLists, getTasks, createTask, updateTask, deleteTask, moveTask,
   createTaskList, deleteTaskList
 } from '@/api/task'
+import { Close } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
@@ -119,6 +120,15 @@ async function handleStatusChange(stageId, status) {
     ElMessage.success('阶段状态已更新')
     fetchAll()
   } catch { /* error handled by interceptor */ }
+}
+
+async function handleDeleteStage(stageId) {
+  try {
+    await ElMessageBox.confirm('确定删除该阶段？阶段中的任务不会被删除。', '确认', { type: 'warning' })
+    await deleteStage(stageId)
+    ElMessage.success('阶段已删除')
+    fetchAll()
+  } catch { /* cancelled or error */ }
 }
 
 async function showTemplates() {
@@ -249,7 +259,12 @@ async function handleMoveTask(taskId, targetListId) {
             v-for="stage in stages" :key="stage.stageId" class="stage-item"
             :class="{ 'is-overdue': stage.isOverdue, 'is-active': stage.status === 'in_progress' }"
           >
-            <div class="stage-name">{{ stage.name }}</div>
+            <div class="stage-header">
+              <div class="stage-name">{{ stage.name }}</div>
+              <el-button type="danger" link size="small" @click.stop="handleDeleteStage(stage.stageId)" class="stage-delete-btn">
+                <el-icon><Close /></el-icon>
+              </el-button>
+            </div>
             <div class="stage-date">{{ stage.startDate || '?' }} ~ {{ stage.endDate || '?' }}</div>
             <el-progress :percentage="stage.taskStats?.completionRate || 0" :stroke-width="6"
               :color="stage.isOverdue ? '#f56c6c' : '#409eff'" />
@@ -377,46 +392,88 @@ async function handleMoveTask(taskId, targetListId) {
 
 <style scoped>
 .project-page { max-width: 100%; }
-.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.section-card { margin-bottom: 16px; }
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  border-radius: 12px;
+  color: #fff;
+}
+.page-header h3 { margin: 0 0 6px 0; font-size: 22px; font-weight: 700; color: #fff; }
+.page-header p { color: rgba(255,255,255,0.85) !important; }
+
+.section-card {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
 .stages-row { display: flex; gap: 16px; flex-wrap: wrap; }
 .stage-item {
-  flex: 1; min-width: 180px; padding: 12px; border: 1px solid #e4e7ed; border-radius: 8px;
+  flex: 1; min-width: 180px; padding: 14px;
+  border: 1px solid #e4e7ed; border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+.stage-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 .stage-item.is-active { border-color: #409eff; background: #ecf5ff; }
 .stage-item.is-overdue { border-color: #f56c6c; background: #fef0f0; }
-.stage-name { font-weight: 600; margin-bottom: 4px; }
-.stage-date { font-size: 12px; color: #999; margin-bottom: 6px; }
+.stage-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.stage-name { font-weight: 600; }
+.stage-delete-btn { flex-shrink: 0; margin-left: 4px; opacity: 0.4; transition: opacity 0.2s; }
+.stage-delete-btn:hover { opacity: 1; }
+.stage-date { font-size: 12px; color: #909399; margin-bottom: 8px; }
 
 .kanban {
-  display: flex; gap: 12px; align-items: flex-start; overflow-x: auto; padding-bottom: 20px;
+  display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 20px;
 }
 .kanban-column {
   min-width: 280px; max-width: 320px; flex-shrink: 0;
-  background: #f0f2f5; border-radius: 8px; padding: 12px;
+  background: #f5f6f8; border-radius: 10px; padding: 14px;
+  border: 1px solid #ebeef5;
 }
 .column-header {
-  display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  font-size: 14px; color: #303133;
 }
-.task-count { background: #ccc; color: #fff; border-radius: 10px; padding: 0 6px; font-size: 12px; }
+.task-count {
+  background: #909399; color: #fff; border-radius: 10px;
+  padding: 1px 7px; font-size: 11px; font-weight: 600;
+}
 .column-body { min-height: 100px; }
 .task-card {
-  background: #fff; border-radius: 6px; padding: 10px; margin-bottom: 8px;
-  cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 8px;
+  cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #ebeef5;
 }
-.task-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.15); }
-.task-title { font-weight: 500; margin-bottom: 6px; }
-.task-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
-.task-actions { display: flex; gap: 4px; margin-top: 6px; border-top: 1px solid #eee; padding-top: 6px; }
-.add-task-btn { width: 100%; border: 1px dashed #ccc; background: transparent; }
+.task-card:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+.task-title { font-weight: 600; margin-bottom: 6px; color: #303133; }
+.task-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; flex-wrap: wrap; }
+.task-actions {
+  display: flex; gap: 6px; margin-top: 8px;
+  border-top: 1px solid #f0f0f0; padding-top: 8px;
+}
+.add-task-btn {
+  width: 100%; border: 1px dashed #c0c4cc; background: transparent;
+  color: #909399; border-radius: 6px; transition: all 0.2s;
+}
+.add-task-btn:hover { border-color: #409eff; color: #409eff; }
 .add-column {
   background: transparent;
   display: flex; align-items: center; justify-content: center;
   min-height: 60px;
 }
 .add-list-btn {
-  padding: 10px 20px; border: 1px dashed #999; border-radius: 6px;
-  color: #999; cursor: pointer; white-space: nowrap;
+  padding: 12px 24px; border: 2px dashed #c0c4cc; border-radius: 10px;
+  color: #909399; cursor: pointer; white-space: nowrap;
+  transition: all 0.2s; font-weight: 500;
 }
-.template-card { cursor: pointer; margin-bottom: 8px; }
+.add-list-btn:hover { border-color: #409eff; color: #409eff; background: rgba(64,158,255,0.04); }
+.template-card {
+  cursor: pointer; margin-bottom: 10px;
+  border-radius: 10px; transition: all 0.2s;
+  border: 1px solid #ebeef5;
+}
+.template-card:hover { border-color: #409eff; background: #ecf5ff; }
 </style>

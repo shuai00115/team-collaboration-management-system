@@ -94,17 +94,44 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  position: relative;
+  overflow: hidden;
+}
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(255,255,255,0.06) 0%, transparent 50%);
+  pointer-events: none;
 }
 .login-card {
-  width: 420px;
+  width: 440px;
   padding: 40px;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.15);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+  position: relative;
+  z-index: 1;
+  animation: cardIn 0.5s ease-out;
 }
-.login-card h2 { text-align: center; margin-bottom: 8px; font-size: 22px; }
-.subtitle { text-align: center; color: #999; margin-bottom: 24px; font-size: 14px; }
-.bottom-link { text-align: center; font-size: 14px; color: #999; }
-.bottom-link a { color: #409eff; margin-left: 4px; }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.login-card h2 {
+  text-align: center; margin-bottom: 8px;
+  font-size: 24px; font-weight: 700;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.subtitle { text-align: center; color: #909399; margin-bottom: 24px; font-size: 14px; }
+.bottom-link { text-align: center; font-size: 14px; color: #909399; }
+.bottom-link a { color: #409eff; margin-left: 4px; font-weight: 500; }
 </style>

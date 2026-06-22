@@ -132,13 +132,14 @@ public class ApplicationServiceImpl extends ServiceImpl<JoinRequestMapper, JoinR
         joinRequestMapper.insert(request);
 
         // 6. 通知团队队长（有新申请需要审核）
+        // relatedId 传 teamId，前端点击通知跳转到 /teams/{teamId}
         notificationService.sendToTeamLeader(
                 teamId,
                 "application",
                 "收到新的入队申请",
                 "有用户申请加入您的团队「" + team.getName() + "」",
                 "join_request",
-                request.getRequestId(),
+                teamId,
                 null  // projectId: 入队申请不关联项目
         );
 
