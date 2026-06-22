@@ -38,6 +38,7 @@ export const useUserStore = defineStore('user', () => {
     token.value = ''
     userInfo.value = null
     localStorage.removeItem('accessToken')
+    localStorage.removeItem('demoMode')
   }
 
   return { userInfo, unreadCount, token, isLoggedIn, isAdmin, fetchUserInfo, fetchUnreadCount, setToken, logout }

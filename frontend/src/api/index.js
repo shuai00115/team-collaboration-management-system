@@ -6,6 +6,26 @@ const request = axios.create({
   timeout: 15000
 })
 
+// ---- Demo 模式拦截器 ----
+request.interceptors.request.use(async (config) => {
+  if (localStorage.getItem('demoMode') === 'true') {
+    // 动态导入 mock 模块，仅在 demo 模式下加载
+    const { getMockResponse } = await import('@/mock/index.js')
+    const mockData = await getMockResponse(config)
+    if (mockData !== null) {
+      // 直接返回 mock 数据，不发送真实请求
+      config.adapter = () => Promise.resolve({
+        data: mockData,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      })
+    }
+  }
+  return config
+})
+
 // 请求拦截器 —— 自动附加 JWT Token
 request.interceptors.request.use(
   (config) => {
@@ -27,6 +47,7 @@ request.interceptors.response.use(
     ElMessage.error(msg || '请求失败')
     if (code === 401) {
       localStorage.removeItem('accessToken')
+      localStorage.removeItem('demoMode')
       window.location.href = '/login'
     }
     return Promise.reject(new Error(msg || '请求失败'))
@@ -34,6 +55,7 @@ request.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken')
+      localStorage.removeItem('demoMode')
       window.location.href = '/login'
     }
     ElMessage.error(error.response?.data?.msg || '网络异常')

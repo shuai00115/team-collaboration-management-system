@@ -33,6 +33,14 @@ async function handleLogin() {
     loading.value = false
   }
 }
+
+// Demo 模式：一键体验，无需后端
+function handleDemoLogin() {
+  localStorage.setItem('demoMode', 'true')
+  localStorage.setItem('accessToken', 'demo_token_fake_jwt')
+  ElMessage.success('🎉 已进入 Demo 体验模式，数据均为模拟数据')
+  router.push('/dashboard')
+}
 </script>
 
 <template>
@@ -49,6 +57,10 @@ async function handleLogin() {
         </el-form-item>
         <el-form-item>
           <el-button type="primary" size="large" @click="handleLogin" :loading="loading" style="width:100%">登 录</el-button>
+          <el-divider style="margin:12px 0">或</el-divider>
+          <el-button type="success" size="large" @click="handleDemoLogin" style="width:100%">
+            🚀 免登录体验 Demo
+          </el-button>
         </el-form-item>
       </el-form>
       <div class="bottom-link">

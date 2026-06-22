@@ -72,6 +72,12 @@ const router = createRouter({
 // 路由守卫 —— 未登录跳转到登录页
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('accessToken')
+  const isDemo = localStorage.getItem('demoMode') === 'true'
+  // Demo 模式：放行所有页面
+  if (isDemo && token) {
+    if (to.meta.noAuth) { next('/dashboard') } else { next() }
+    return
+  }
   if (!to.meta.noAuth && !token) {
     next('/login')
   } else if (to.meta.noAuth && token) {
