@@ -133,8 +133,20 @@ async function handleDeleteProject(projectId) {
 
 async function handleDeleteTeam() {
   try {
-    await ElMessageBox.confirm('确定要解散该团队吗？此操作不可逆！', '确认解散', { type: 'error', confirmButtonText: '确认解散' })
-    await deleteTeam(teamId.value)
+    const { value } = await ElMessageBox.prompt(
+      '请输入团队名称以确认解散，此操作不可逆！',
+      '确认解散',
+      {
+        type: 'error',
+        confirmButtonText: '确认解散',
+        inputValidator: (value) => {
+          if (!value || !value.trim()) return '请输入团队名称'
+          if (value.trim() !== team.value.name) return '团队名称不匹配'
+          return true
+        },
+      }
+    )
+    await deleteTeam(teamId.value, value)
     ElMessage.success('团队已解散')
     router.push('/teams')
   } catch { /* cancelled or error */ }

@@ -16,8 +16,8 @@ export function updateTeam(teamId, data) {
   return request.put(`/teams/${teamId}`, data)
 }
 
-export function deleteTeam(teamId) {
-  return request.delete(`/teams/${teamId}`)
+export function deleteTeam(teamId, confirm) {
+  return request.delete(`/teams/${teamId}`, { params: { confirm } })
 }
 
 export function getTeamMembers(teamId) {
