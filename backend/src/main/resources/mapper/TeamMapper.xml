@@ -26,7 +26,7 @@
             t.created_at,
             t.updated_at,
             u.username AS creator_name,
-            COUNT(tm.user_id) AS current_members,
+            COUNT(DISTINCT tm.user_id) AS current_members,
             GROUP_CONCAT(DISTINCT s.skill_name ORDER BY s.skill_name SEPARATOR ',') AS required_skills
         FROM teams t
         LEFT JOIN users u ON t.creator_id = u.user_id
@@ -49,14 +49,14 @@
         </where>
         GROUP BY t.team_id, t.name, t.description, t.creator_id, t.max_members, t.status, t.created_at, t.updated_at, u.username
         <if test="minMembers != null">
-            HAVING COUNT(tm.user_id) &gt;= #{minMembers}
+            HAVING COUNT(DISTINCT tm.user_id) &gt;= #{minMembers}
         </if>
         <if test="maxMembers != null">
             <if test="minMembers != null">
-                AND COUNT(tm.user_id) &lt;= #{maxMembers}
+                AND COUNT(DISTINCT tm.user_id) &lt;= #{maxMembers}
             </if>
             <if test="minMembers == null">
-                HAVING COUNT(tm.user_id) &lt;= #{maxMembers}
+                HAVING COUNT(DISTINCT tm.user_id) &lt;= #{maxMembers}
             </if>
         </if>
         ORDER BY t.created_at DESC
@@ -67,7 +67,7 @@
         SELECT
             t.*,
             u.username AS creator_name,
-            COUNT(tm.user_id) AS current_members
+            COUNT(DISTINCT tm.user_id) AS current_members
         FROM teams t
         LEFT JOIN team_members tm ON t.team_id = tm.team_id
         LEFT JOIN users u ON t.creator_id = u.user_id
@@ -108,7 +108,7 @@
             t.created_at,
             t.updated_at,
             u.username AS creator_name,
-            COUNT(tm.user_id) AS current_members
+            COUNT(DISTINCT tm.user_id) AS current_members
         FROM teams t
         LEFT JOIN users u ON t.creator_id = u.user_id
         LEFT JOIN team_members tm ON t.team_id = tm.team_id
