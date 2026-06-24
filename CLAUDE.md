@@ -128,7 +128,7 @@ Controller (@RestController) → Service interface → ServiceImpl → Mapper (M
 | 5 | `team_required_skills` | PK (team_id, skill_id), for recruitment requirements |
 | 6 | `team_members` | PK (team_id, user_id), role ENUM(leader/member) |
 | 7 | `join_requests` | UNIQUE (user_id, team_id), status ENUM(pending/approved/rejected) |
-| 8 | `projects` | FK → teams, status tracking |
+| 8 | `projects` | FK → teams |
 | 9 | `stages` | FK → projects, date range + status flow |
 | 10 | `stage_templates` | JSON field storing preset stage structures |
 | 11 | `task_lists` | FK → projects, position for ordering, 3 defaults per project |
